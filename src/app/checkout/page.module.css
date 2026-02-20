@@ -1,0 +1,138 @@
+.page {
+    padding-top: var(--nav-height);
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 4rem;
+}
+
+.formSection h1 {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+}
+
+.formGroup {
+    margin-bottom: 2rem;
+}
+
+.sectionTitle {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+.inputGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.inputWrapper {
+    margin-bottom: 1rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+.summary {
+    position: sticky;
+    top: calc(var(--nav-height) + 2rem);
+    height: fit-content;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+}
+
+.summaryTitle {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.orderItem {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.itemName {
+    color: var(--text-primary);
+}
+
+.itemPrice {
+    color: var(--text-secondary);
+}
+
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+}
+
+.btnCheckout {
+    width: 100%;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border: none;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btnCheckout:hover {
+    opacity: 0.9;
+}
+
+@media (max-width: 900px) {
+    .container {
+        grid-template-columns: 1fr;
+        padding: 2rem 1.5rem;
+    }
+
+    .summary {
+        position: static;
+        margin-top: 2rem;
+    }
+}

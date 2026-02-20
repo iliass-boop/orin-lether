@@ -1,0 +1,56 @@
+.page {
+    padding-top: var(--nav-height);
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+}
+
+.title {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.count {
+    font-family: var(--font-body);
+    color: var(--text-secondary);
+    margin-bottom: 3rem;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    color: var(--text-secondary);
+}
+
+.btnSecondary {
+    display: inline-block;
+    width: fit-content;
+    padding: 1rem 2rem;
+    border: 1px solid var(--border-dark);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+}
+
+.btnSecondary:hover {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}

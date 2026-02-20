@@ -1,0 +1,145 @@
+/* ============================================
+   ORIN — Cinematic Preloader
+   ============================================ */
+
+.preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #0D0C0B;
+    pointer-events: all;
+    overflow: hidden;
+}
+
+.preloader.done {
+    pointer-events: none;
+}
+
+/* Subtle grain overlay */
+.preloader::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Ambient glow */
+.ambientGlow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(196, 128, 61, 0.08) 0%, transparent 70%);
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0;
+}
+
+/* Logo container */
+.logoContainer {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.logoText {
+    font-family: var(--font-heading);
+    font-size: clamp(4rem, 12vw, 8rem);
+    font-weight: 400;
+    color: #FDFBF7;
+    letter-spacing: 0.15em;
+    line-height: 1;
+    overflow: hidden;
+    display: flex;
+}
+
+.logoChar {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(100%);
+}
+
+/* Animated line */
+.logoLine {
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #C4803D, transparent);
+}
+
+/* Tagline */
+.tagline {
+    font-family: var(--font-accent);
+    font-size: clamp(0.85rem, 2vw, 1.1rem);
+    font-style: italic;
+    font-weight: 300;
+    color: rgba(253, 251, 247, 0.5);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+/* Counter */
+.counter {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.counterNumber {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(253, 251, 247, 0.35);
+    letter-spacing: 0.3em;
+    font-variant-numeric: tabular-nums;
+}
+
+.progressTrack {
+    width: 60px;
+    height: 1px;
+    background: rgba(253, 251, 247, 0.08);
+    border-radius: 1px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #C4803D, #8B5E3C);
+    border-radius: 1px;
+}
+
+/* Curtain reveal */
+.curtainTop,
+.curtainBottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50vh;
+    background-color: #0D0C0B;
+    z-index: 3;
+}
+
+.curtainTop {
+    top: 0;
+}
+
+.curtainBottom {
+    bottom: 0;
+}

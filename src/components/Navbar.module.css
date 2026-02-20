@@ -1,0 +1,319 @@
+/* ============================================
+   ORIN — Navbar — Glass Morphism Edition
+   ============================================ */
+
+.nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 0 var(--space-xl);
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    background: transparent;
+}
+
+.nav.scrolled {
+    background: rgba(253, 251, 247, 0.85);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    box-shadow: 0 1px 0 rgba(26, 26, 26, 0.06);
+}
+
+.nav.hidden {
+    transform: translateY(-100%);
+}
+
+.navInner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    height: var(--nav-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* --- Logo --- */
+.logo {
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--ivory);
+    transition: color 0.5s var(--ease-out);
+    text-decoration: none;
+    position: relative;
+    z-index: 10;
+}
+
+.nav.scrolled .logo {
+    color: var(--obsidian);
+}
+
+.logoAccent {
+    color: var(--cognac);
+}
+
+/* --- Nav Links --- */
+.navLinks {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xl);
+}
+
+.navLink {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    padding: var(--space-sm) 0;
+    will-change: transform;
+}
+
+.navLinkText {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(253, 251, 247, 0.85);
+    transition: color 0.5s var(--ease-out);
+}
+
+.nav.scrolled .navLinkText {
+    color: var(--obsidian);
+}
+
+.navLinkUnderline {
+    display: block;
+    width: 0;
+    height: 1.5px;
+    background: var(--cognac);
+    margin-top: 3px;
+    transition: width 0.4s var(--ease-out);
+    border-radius: 1px;
+}
+
+.navLink:hover .navLinkUnderline,
+.navLinkActive .navLinkUnderline {
+    width: 100%;
+}
+
+.navLinkActive .navLinkText {
+    color: var(--cognac);
+}
+
+.nav.scrolled .navLinkActive .navLinkText {
+    color: var(--cognac);
+}
+
+/* --- Right Section --- */
+.navRight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.cartButton {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: none;
+    transition: all 0.3s var(--ease-out);
+    color: var(--ivory);
+}
+
+.cartButton:hover {
+    background: rgba(196, 128, 61, 0.1);
+    transform: scale(1.05);
+}
+
+.nav.scrolled .cartButton {
+    color: var(--obsidian);
+}
+
+.cartIcon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cartBadge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cognac);
+    color: var(--ivory);
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 50%;
+    padding: 0 4px;
+    animation: badgePop 0.3s var(--ease-out);
+}
+
+@keyframes badgePop {
+    0% {
+        transform: scale(0);
+    }
+
+    60% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* --- Menu Toggle --- */
+.menuToggle {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: none;
+    z-index: 9999;
+    position: relative;
+}
+
+.menuToggle span {
+    display: block;
+    width: 22px;
+    height: 1.5px;
+    background: var(--ivory);
+    transition: all 0.4s var(--ease-out);
+    border-radius: 2px;
+}
+
+.nav.scrolled .menuToggle span {
+    background: var(--obsidian);
+}
+
+.menuToggle.menuOpen span {
+    background: var(--ivory) !important;
+}
+
+.menuToggle.menuOpen span:nth-child(1) {
+    transform: rotate(45deg) translate(4.5px, 4.5px);
+}
+
+.menuToggle.menuOpen span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.menuToggle.menuOpen span:nth-child(3) {
+    transform: rotate(-45deg) translate(4.5px, -4.5px);
+}
+
+/* --- Mobile Overlay --- */
+.mobileOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(13, 12, 11, 0.97);
+    backdrop-filter: blur(30px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s var(--ease-out);
+}
+
+.mobileOverlayOpen {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.mobileOverlayContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.mobileLink {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-lg);
+    text-decoration: none;
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.mobileOverlayOpen .mobileLink {
+    animation: mobileLinkReveal 0.6s var(--ease-out) forwards;
+}
+
+@keyframes mobileLinkReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mobileLinkNumber {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--cognac);
+    letter-spacing: 0.1em;
+}
+
+.mobileLinkText {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 400;
+    color: var(--ivory);
+    letter-spacing: -0.01em;
+    transition: color 0.3s var(--ease-out);
+}
+
+.mobileLink:hover .mobileLinkText {
+    color: var(--cognac);
+}
+
+.mobileOverlayFooter {
+    position: absolute;
+    bottom: var(--space-2xl);
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.mobileOverlayFooter p {
+    font-family: var(--font-accent);
+    font-size: var(--text-sm);
+    font-style: italic;
+    color: rgba(253, 251, 247, 0.3);
+    letter-spacing: 0.15em;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .navLinks {
+        display: none;
+    }
+
+    .menuToggle {
+        display: flex;
+    }
+}

@@ -1,0 +1,80 @@
+.dot,
+.ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    will-change: transform;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    margin-top: -3px;
+    background-color: var(--obsidian);
+    border-radius: 50%;
+    transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease, background-color 0.2s ease, opacity 0.3s ease;
+}
+
+.ring {
+    width: 36px;
+    height: 36px;
+    margin-left: -18px;
+    margin-top: -18px;
+    border: 1.5px solid var(--obsidian);
+    border-radius: 50%;
+    transition: width 0.35s var(--ease-out), height 0.35s var(--ease-out), margin 0.35s var(--ease-out), border-color 0.3s ease, opacity 0.3s ease;
+}
+
+/* Visible */
+.visible {
+    opacity: 1;
+}
+
+/* Hovering interactive elements */
+.ring.hovering {
+    width: 56px;
+    height: 56px;
+    margin-left: -28px;
+    margin-top: -28px;
+    border-color: var(--cognac);
+    opacity: 0.6;
+}
+
+/* Clicking */
+.dot.clicking {
+    width: 4px;
+    height: 4px;
+    margin-left: -2px;
+    margin-top: -2px;
+    background-color: var(--cognac);
+}
+
+.ring.clicking {
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    margin-top: -14px;
+    border-color: var(--cognac);
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+
+    .dot,
+    .ring {
+        display: none !important;
+    }
+}
+
+@media (hover: none) {
+
+    .dot,
+    .ring {
+        display: none !important;
+    }
+}

@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRef, useEffect, useState } from 'react';
+import { useRef } from 'react';
 import styles from './page.module.css';
 import ProductCard from '@/components/ProductCard';
 import { products } from '@/lib/store';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -72,7 +73,7 @@ export default function HomePage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-  const heroImageRef = useRef<HTMLDivElement>(null);
+  const heroImageRef = useRef<HTMLVideoElement>(null);
   const horizontalRef = useRef<HTMLDivElement>(null);
   const horizontalInnerRef = useRef<HTMLDivElement>(null);
 
@@ -83,139 +84,121 @@ export default function HomePage() {
   const testimonialCardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const revealTextsRef = useRef<(HTMLElement | null)[]>([]);
 
-  const [mounted, setMounted] = useState(false);
+  useGSAP(() => {
+    // --- Hero image parallax ---
+    if (heroImageRef.current && heroRef.current) {
+      gsap.to(heroImageRef.current, {
+        yPercent: 20,
+        scale: 1.05,
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1.2,
+        },
+      });
+    }
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    // Small delay to let DOM settle after hydration
-    const timer = setTimeout(() => {
-      const ctx = gsap.context(() => {
-
-        // --- Hero image parallax ---
-        if (heroImageRef.current && heroRef.current) {
-          gsap.to(heroImageRef.current, {
-            yPercent: 20,
-            scale: 1.05,
-            scrollTrigger: {
-              trigger: heroRef.current,
-              start: 'top top',
-              end: 'bottom top',
-              scrub: 1.2,
-            },
-          });
+    // --- Hero text reveal ---
+    const validHeroLines = heroLinesRef.current.filter(Boolean);
+    if (validHeroLines.length > 0) {
+      const heroTl = gsap.timeline();
+      heroTl.fromTo(
+        validHeroLines,
+        { y: 120, rotateX: -80 },
+        {
+          y: 0,
+          rotateX: 0,
+          duration: 1.3,
+          stagger: 0.12,
+          ease: 'power3.out',
+          delay: 2.0,
         }
+      );
 
-        // --- Hero text reveal ---
-        const validHeroLines = heroLinesRef.current.filter(Boolean);
-        if (validHeroLines.length > 0) {
-          const heroTl = gsap.timeline();
-          heroTl.fromTo(
-            validHeroLines,
-            { y: 120, rotateX: -80 },
-            {
-              y: 0,
-              rotateX: 0,
-              duration: 1.3,
-              stagger: 0.12,
-              ease: 'power3.out',
-              delay: 2.0,
-            }
-          );
+      const validFades = heroFadesRef.current.filter(Boolean);
+      if (validFades.length > 0) {
+        heroTl.fromTo(
+          validFades,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power2.out',
+          },
+          '-=0.5'
+        );
+      }
+    }
 
-          const validFades = heroFadesRef.current.filter(Boolean);
-          if (validFades.length > 0) {
-            heroTl.fromTo(
-              validFades,
-              { y: 30, opacity: 0 },
-              {
-                y: 0,
-                opacity: 1,
-                duration: 0.8,
-                stagger: 0.1,
-                ease: 'power2.out',
-              },
-              '-=0.5'
-            );
-          }
+    // --- Horizontal Scroll Showcase ---
+    // Uses native CSS overflow-x scroll (no GSAP pin — avoids Lenis conflicts)
+
+    // --- Process Steps Stagger ---
+    processStepsRef.current.filter(Boolean).forEach((step, i) => {
+      gsap.fromTo(
+        step!,
+        { y: 60, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: step!,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+          delay: i * 0.1,
         }
+      );
+    });
 
-        // --- Horizontal Scroll Showcase ---
-        // Uses native CSS overflow-x scroll (no GSAP pin — avoids Lenis conflicts)
+    // --- Testimonial Cards ---
+    testimonialCardsRef.current.filter(Boolean).forEach((card) => {
+      gsap.fromTo(
+        card!,
+        { y: 50, opacity: 0, scale: 0.96 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.7,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: card!,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
 
-        // --- Process Steps Stagger ---
-        processStepsRef.current.filter(Boolean).forEach((step, i) => {
-          gsap.fromTo(
-            step!,
-            { y: 60, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.8,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: step!,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-              delay: i * 0.1,
-            }
-          );
-        });
+    // --- Reveal Texts ---
+    revealTextsRef.current.filter(Boolean).forEach((el) => {
+      gsap.fromTo(
+        el!,
+        { y: 40, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: el!,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
 
-        // --- Testimonial Cards ---
-        testimonialCardsRef.current.filter(Boolean).forEach((card) => {
-          gsap.fromTo(
-            card!,
-            { y: 50, opacity: 0, scale: 0.96 },
-            {
-              y: 0,
-              opacity: 1,
-              scale: 1,
-              duration: 0.7,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: card!,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            }
-          );
-        });
+    // Refresh after everything is set up
+    ScrollTrigger.refresh();
 
-        // --- Reveal Texts ---
-        revealTextsRef.current.filter(Boolean).forEach((el) => {
-          gsap.fromTo(
-            el!,
-            { y: 40, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.8,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: el!,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            }
-          );
-        });
-
-        // Refresh after everything is set up
-        ScrollTrigger.refresh();
-
-      }, containerRef);
-
-      return () => ctx.revert();
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [mounted]);
+  }, { scope: containerRef });
 
   // Helper to push refs into arrays
   const addHeroLine = (el: HTMLSpanElement | null, i: number) => {
@@ -234,15 +217,15 @@ export default function HomePage() {
     <div ref={containerRef}>
       {/* ===== Cinematic Hero ===== */}
       <section className={styles.hero} ref={heroRef}>
-        <div className={styles.heroImageWrapper} ref={heroImageRef}>
-          <Image
-            src="/images/brand/hero-banner.png"
-            alt="ORIN leather goods collection — handcrafted bags and accessories"
-            fill
-            priority
-            quality={90}
+        <div className={styles.heroImageWrapper}>
+          <video
+            ref={heroImageRef}
+            src="/images/brand/hero-animation.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
             className={styles.heroImage}
-            sizes="100vw"
           />
           <div className={styles.heroOverlay} />
         </div>
@@ -335,10 +318,10 @@ export default function HomePage() {
           </div>
           <div className={styles.philosophyImageWrapper}>
             <Image
-              src="/images/brand/craftsmanship.png"
-              alt="Artisan hand-stitching ORIN leather goods"
+              src="/images/brand/philosophy-patina.png"
+              alt="Beautifully aged ORIN full-grain leather showing rich patina"
               fill
-              quality={85}
+              quality={90}
               className={styles.philosophyImage}
               sizes="(max-width: 768px) 100vw, 50vw"
             />

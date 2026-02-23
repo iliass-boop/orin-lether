@@ -10,14 +10,17 @@ import type { NextRequest } from 'next/server';
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX = 100; // 100 requests per minute per IP
+const RATE_LIMIT_MAX_CHECKOUT = 5; // Stricter limit for checkout to prevent card testing
 
 function getRateLimitKey(request: NextRequest): string {
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
-    return ip;
+    // Append the path type to separate checkout rate limits from general API limits
+    const isCheckout = request.nextUrl.pathname.startsWith('/api/checkout') ? ':checkout' : ':general';
+    return ip + isCheckout;
 }
 
-function isRateLimited(key: string): boolean {
+function isRateLimited(key: string, isCheckout: boolean): boolean {
     const now = Date.now();
     const entry = rateLimitStore.get(key);
 
@@ -34,7 +37,9 @@ function isRateLimited(key: string): boolean {
     }
 
     entry.count++;
-    if (entry.count > RATE_LIMIT_MAX) {
+    const maxRequests = isCheckout ? RATE_LIMIT_MAX_CHECKOUT : RATE_LIMIT_MAX;
+
+    if (entry.count > maxRequests) {
         return true;
     }
 
@@ -59,16 +64,18 @@ function isSuspiciousBot(userAgent: string | null): boolean {
 }
 
 // --- Security Headers ---
-function getSecurityHeaders(): Record<string, string> {
+function getSecurityHeaders(nonce: string): Record<string, string> {
+    const isDev = process.env.NODE_ENV === 'development';
     return {
         // Content Security Policy — strict, prevents XSS
         'Content-Security-Policy': [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires inline for HMR in dev
+            `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https://js.stripe.com ${isDev ? "'unsafe-eval'" : ""}`,
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: blob: https:",
-            "connect-src 'self' https: wss:",
+            "connect-src 'self' https: wss: ws: https://api.stripe.com",
+            "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",
@@ -122,12 +129,7 @@ function generateCSRFToken(): string {
 // --- Main Middleware ---
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-
-    // 0. Development mode bypass — skip all security checks locally
-    if (process.env.NODE_ENV === 'development') {
-        const response = NextResponse.next();
-        return response;
-    }
+    const isDev = process.env.NODE_ENV === 'development';
 
     // 1. Skip static assets and internal Next.js routes
     if (
@@ -139,7 +141,7 @@ export function middleware(request: NextRequest) {
     }
 
     // 2. Bot detection (block on API routes only — allow crawlers on pages)
-    if (pathname.startsWith('/api')) {
+    if (!isDev && pathname.startsWith('/api')) {
         const userAgent = request.headers.get('user-agent');
         if (isSuspiciousBot(userAgent)) {
             return new NextResponse(
@@ -150,21 +152,24 @@ export function middleware(request: NextRequest) {
     }
 
     // 3. Rate limiting
-    const rateLimitKey = getRateLimitKey(request);
-    if (isRateLimited(rateLimitKey)) {
-        return new NextResponse(
-            JSON.stringify({
-                error: 'Too many requests. Please slow down.',
-                retryAfter: 60,
-            }),
-            {
-                status: 429,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Retry-After': '60',
-                },
-            }
-        );
+    if (!isDev) {
+        const rateLimitKey = getRateLimitKey(request);
+        const isCheckoutRateLimit = request.nextUrl.pathname.startsWith('/api/checkout');
+        if (isRateLimited(rateLimitKey, isCheckoutRateLimit)) {
+            return new NextResponse(
+                JSON.stringify({
+                    error: 'Too many requests. Please slow down.',
+                    retryAfter: 60,
+                }),
+                {
+                    status: 429,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Retry-After': '60',
+                    },
+                }
+            );
+        }
     }
 
     // 4. Request size validation (block oversized payloads)
@@ -200,9 +205,19 @@ export function middleware(request: NextRequest) {
         }
     }
 
-    // 7. Apply security headers to response
-    const response = NextResponse.next();
-    const securityHeaders = getSecurityHeaders();
+    // 7. Apply security headers to response and request
+    const nonce = btoa(crypto.randomUUID());
+    const securityHeaders = getSecurityHeaders(nonce);
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-nonce', nonce);
+    requestHeaders.set('Content-Security-Policy', securityHeaders['Content-Security-Policy']);
+
+    const response = NextResponse.next({
+        request: {
+            headers: requestHeaders,
+        },
+    });
 
     for (const [key, value] of Object.entries(securityHeaders)) {
         if (value) {

@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+
+
 const nextConfig: NextConfig = {
   // --- Transpile packages for bundler compatibility ---
   transpilePackages: ['gsap', '@gsap/react'],
@@ -22,6 +24,7 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
+
           // Prevent MIME sniffing
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           // Clickjacking protection
@@ -32,8 +35,8 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           // HSTS
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          // Permissions policy
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(self)' },
+          // Permissions policy (Updated to allow Stripe)
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com")' },
         ],
       },
       {

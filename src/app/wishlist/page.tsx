@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+
 import styles from './page.module.css';
 import { useCartStore, products } from '@/lib/store';
 import ProductCard from '@/components/ProductCard';

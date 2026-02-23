@@ -1,25 +1,80 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState, useCallback, useEffect } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 import styles from './page.module.css';
 import ProductCard from '@/components/ProductCard';
 import { products, categories } from '@/lib/store';
+import { useDebounce } from '@/hooks/useDebounce';
 
-export default function ProductsPage() {
-    const [activeCategory, setActiveCategory] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
+function ProductsContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
 
+    // The URL is the Single Source of Truth for the active category
+    const activeCategory = searchParams.get('category') || 'all';
+
+    // Local state strictly for instant input-binding (so the keyboard doesn't lag)
+    const [inputValue, setInputValue] = useState(searchParams.get('q') || '');
+    const debouncedSearchQuery = useDebounce(inputValue, 400);
+
+    const createQueryString = useCallback(
+        (name: string, value: string) => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (value && value !== 'all') {
+                params.set(name, value);
+            } else {
+                params.delete(name);
+            }
+            return params.toString();
+        },
+        [searchParams]
+    );
+
+    // Sync debounced search to URL
+    useEffect(() => {
+        const newUrl = pathname + '?' + createQueryString('q', debouncedSearchQuery);
+        // Only replace if the URL actually changed to prevent loops
+        if (searchParams.get('q') !== debouncedSearchQuery && (searchParams.has('q') || debouncedSearchQuery !== '')) {
+            router.replace(newUrl, { scroll: false });
+        }
+    }, [debouncedSearchQuery, pathname, createQueryString, searchParams, router]);
+
+    // Derived State: Calculate immediately based on URL parameters
     const filteredProducts = products.filter((p) => {
         const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
-        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const currentSearch = searchParams.get('q') || '';
+        const matchesSearch = p.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
+            p.description.toLowerCase().includes(currentSearch.toLowerCase());
         return matchesCategory && matchesSearch;
     });
+
+    const handleCategoryChange = (slug: string) => {
+        router.push(pathname + '?' + createQueryString('category', slug), { scroll: false });
+    };
+
+    const handleSearchChange = (value: string) => {
+        setInputValue(value);
+    };
 
     return (
         <div className={styles.page}>
             {/* Header */}
             <header className={styles.header}>
+                <div className={styles.headerImageWrapper}>
+                    <video
+                        src="/videos/Premium_Product_Collection_Animation.mp4"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className={styles.headerImage}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <div className={styles.headerOverlay} />
+                </div>
                 <div className={styles.headerInner}>
                     <p className={styles.accent}>The Essentials Collection</p>
                     <h1 className={styles.title}>Our Collection</h1>
@@ -34,13 +89,12 @@ export default function ProductsPage() {
             <div className={styles.controls}>
                 {/* Search */}
                 <div className={styles.searchWrapper}>
-                    <label htmlFor="collection-search" className="sr-only">Search collection</label>
                     <input
                         id="collection-search"
                         type="search"
                         placeholder="Search collection..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        value={inputValue}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                         className={styles.searchInput}
                         aria-label="Search collection"
                     />
@@ -56,7 +110,7 @@ export default function ProductsPage() {
                         <button
                             key={cat.slug}
                             className={`${styles.filterBtn} ${activeCategory === cat.slug ? styles.filterBtnActive : ''}`}
-                            onClick={() => setActiveCategory(cat.slug)}
+                            onClick={() => handleCategoryChange(cat.slug)}
                         >
                             {cat.name}
                         </button>
@@ -78,5 +132,13 @@ export default function ProductsPage() {
                 </div>
             </section>
         </div>
+    );
+}
+
+export default function ProductsPage() {
+    return (
+        <Suspense fallback={<div className={styles.page}>Loading...</div>}>
+            <ProductsContent />
+        </Suspense>
     );
 }

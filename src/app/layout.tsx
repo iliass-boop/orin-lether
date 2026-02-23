@@ -10,11 +10,7 @@ import SmoothScrollProvider from '@/components/SmoothScrollProvider';
 import { ToastProvider } from '@/components/Toast';
 import Marquee from '@/components/Marquee';
 import PageTransition from '@/components/PageTransition';
-
-// Lazy-load decorative/presentational components — code-split into separate chunks
-const CustomCursor = dynamic(() => import('@/components/CustomCursor'));
-const FilmGrain = dynamic(() => import('@/components/FilmGrain'));
-const Preloader = dynamic(() => import('@/components/Preloader'));
+import ClientAesthetics from '@/components/ClientAesthetics';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -71,12 +67,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable} ${cormorant.variable}`}>
       <body>
-        <Preloader />
         <SecurityProvider>
           <SmoothScrollProvider>
             <ToastProvider>
-              <CustomCursor />
-              <FilmGrain />
+              <ClientAesthetics />
               <Marquee />
               <Navbar />
               <CartDrawer />

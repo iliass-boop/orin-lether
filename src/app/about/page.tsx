@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './page.module.css';
+import StoryHero from './StoryHero';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -56,21 +58,7 @@ const materialDetails = [
 export default function AboutPage() {
     return (
         <div className={styles.page}>
-            {/* Hero */}
-            <section className={styles.hero}>
-                <div className={styles.heroInner}>
-                    <p className={styles.heroAccent}>The story behind ORIN</p>
-                    <h1 className={styles.heroTitle}>
-                        We Build Things<br />
-                        That Last
-                    </h1>
-                    <p className={styles.heroText}>
-                        ORIN exists because we were tired of replacing things. Tired of zippers
-                        that break, leather that peels, and products designed to be disposable.
-                        So we started making our own.
-                    </p>
-                </div>
-            </section>
+            <StoryHero />
 
             {/* Story */}
             <section className={styles.story}>
@@ -99,7 +87,13 @@ export default function AboutPage() {
                         </p>
                     </div>
                     <div className={styles.storyImage}>
-                        The Workshop
+                        <Image
+                            src="/images/brand/about-workshop.png"
+                            alt="Artisan hand-burnishing saddle leather"
+                            fill
+                            quality={90}
+                            className={styles.sectionImage}
+                        />
                     </div>
                 </div>
             </section>
@@ -127,7 +121,13 @@ export default function AboutPage() {
             <section className={styles.materials}>
                 <div className={styles.materialsInner}>
                     <div className={styles.materialsImage}>
-                        Raw Materials
+                        <Image
+                            src="/images/brand/about-materials.png"
+                            alt="Raw leather materials and brass hardware"
+                            fill
+                            quality={90}
+                            className={styles.sectionImage}
+                        />
                     </div>
                     <div className={styles.materialsContent}>
                         <p className={styles.sectionLabel}>Materials</p>

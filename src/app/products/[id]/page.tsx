@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,14 @@ import { products, useCartStore } from '@/lib/store';
 import { useToast } from '@/components/Toast';
 import ReviewSection from '@/components/ReviewSection';
 import { formatPrice } from '@/lib/formatPrice';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+import Product3DViewer from '@/components/Product3DViewer';
+
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger, useGSAP);
+}
 
 export default function ProductDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -24,7 +32,41 @@ export default function ProductDetailPage() {
     const [addedToCart, setAddedToCart] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [openAccordion, setOpenAccordion] = useState<string | null>('details');
+    const [is3DViewActive, setIs3DViewActive] = useState(false);
 
+    const detailsRef = useRef<HTMLDivElement>(null);
+    const galleryRef = useRef<HTMLDivElement>(null);
+
+    useGSAP(() => {
+        if (!detailsRef.current || !galleryRef.current || product.images.length <= 1) return;
+
+        // Set up ScrollTrigger to scrub through images based on scroll depth in details section
+        ScrollTrigger.create({
+            trigger: detailsRef.current,
+            start: "top top+=100", // Start when details top hits near top of viewport
+            end: "bottom bottom-=100", // End when details bottom hits near bottom
+            scrub: true,
+            onUpdate: (self) => {
+                // Calculate which image to show based on progress (0 to 1)
+                const progress = self.progress;
+                const totalImages = product.images.length;
+
+                // Map progress to an image index
+                // progress 0 = img 0, progress 0.99 = last img
+                const index = Math.min(
+                    Math.floor(progress * totalImages),
+                    totalImages - 1
+                );
+
+                setActiveImage(index);
+            }
+        });
+
+        // Cleanup
+        return () => {
+            ScrollTrigger.getAll().forEach(t => t.kill());
+        };
+    }, { dependencies: [product.images.length], scope: detailsRef });
 
     const handleAddToCart = () => {
         addItem(product, quantity);
@@ -65,65 +107,95 @@ export default function ProductDetailPage() {
 
                 {/* Product Layout */}
                 <div className={styles.productLayout}>
-                    {/* Gallery */}
-                    <div className={styles.gallery}>
-                        <div className={styles.mainImage}>
-                            <Image
-                                src={product.images[activeImage] || product.image}
-                                alt={`${product.name} — ${imageLabels[activeImage] || 'view'}`}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 55vw"
-                                className={styles.mainImagePhoto}
-                                priority
-                                quality={90}
-                            />
-                            {/* Color indicator badge on image */}
-                            <span className={styles.colorBadge}>
-                                <span className={styles.colorDot} style={{ backgroundColor: product.color.hex }} />
-                                {product.color.name}
-                            </span>
+                    {/* Gallery & 3D Viewer */}
+                    <div className={styles.gallery} ref={galleryRef}>
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                            <button
+                                onClick={() => setIs3DViewActive(false)}
+                                style={{
+                                    background: !is3DViewActive ? '#c9a96e' : 'transparent',
+                                    color: !is3DViewActive ? '#0a0a0a' : '#f5f0e8',
+                                    border: '1px solid #c9a96e',
+                                    padding: '0.4rem 1rem',
+                                    borderRadius: '100px',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.1em',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s'
+                                }}
+                            >
+                                Gallery
+                            </button>
+                            <button
+                                onClick={() => setIs3DViewActive(true)}
+                                style={{
+                                    background: is3DViewActive ? '#c9a96e' : 'transparent',
+                                    color: is3DViewActive ? '#0a0a0a' : '#f5f0e8',
+                                    border: '1px solid #c9a96e',
+                                    padding: '0.4rem 1rem',
+                                    borderRadius: '100px',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.1em',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem'
+                                }}
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                3D Explore
+                            </button>
                         </div>
 
-                        {/* Thumbnails for desktop */}
-                        {product.images.length > 1 && (
-                            <div className={styles.thumbnails}>
-                                {product.images.map((img, i) => (
-                                    <button
-                                        key={i}
-                                        className={`${styles.thumbnail} ${activeImage === i ? styles.thumbnailActive : ''}`}
-                                        onClick={() => setActiveImage(i)}
-                                        aria-label={`View ${imageLabels[i] || `image ${i + 1}`}`}
-                                    >
-                                        <Image
-                                            src={img}
-                                            alt={`${product.name} ${imageLabels[i] || `view ${i + 1}`}`}
-                                            fill
-                                            sizes="120px"
-                                            className={styles.thumbnailImage}
-                                            quality={60}
-                                        />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        <div className={styles.mainImage}>
+                            {is3DViewActive && product.model3dImages && product.model3dImages.length > 0 ? (
+                                <Product3DViewer images={product.model3dImages} />
+                            ) : (
+                                <>
+                                    <Image
+                                        src={product.images[activeImage] || product.image}
+                                        alt={`${product.name} — ${imageLabels[activeImage] || 'view'}`}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 55vw"
+                                        className={styles.mainImagePhoto}
+                                        priority
+                                        quality={90}
+                                    />
+                                    {/* Color indicator badge on image */}
+                                    <span className={styles.colorBadge}>
+                                        <span className={styles.colorDot} style={{ backgroundColor: product.color.hex }} />
+                                        {product.color.name}
+                                    </span>
+                                </>
+                            )}
+                        </div>
 
                         {/* Dot indicators for mobile */}
-                        {product.images.length > 1 && (
+                        {!is3DViewActive && (
                             <div className={styles.dotIndicators}>
-                                {product.images.map((_, i) => (
-                                    <button
-                                        key={i}
-                                        className={`${styles.dot} ${activeImage === i ? styles.dotActive : ''}`}
-                                        onClick={() => setActiveImage(i)}
-                                        aria-label={`View image ${i + 1}`}
-                                    />
-                                ))}
+                                {product.images.map((_, i) => {
+                                    return (
+                                        <button
+                                            key={`dot-${i}`}
+                                            className={`${styles.dot} ${activeImage === i ? styles.dotActive : ''}`}
+                                            onClick={() => {
+                                                setActiveImage(i);
+                                                // On mobile, scroll to main image when dot is clicked
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            aria-label={`View image ${i + 1}`}
+                                        />
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
 
                     {/* Details */}
-                    <div className={styles.details}>
+                    <div className={styles.details} ref={detailsRef}>
                         {product.bestseller && (
                             <span className={`${styles.badge} ${styles.badgeBestseller}`}>Bestseller</span>
                         )}

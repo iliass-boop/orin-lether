@@ -12,6 +12,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
 
     useEffect(() => {
         if (pathname !== prevPathRef.current) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsTransitioning(true);
             // Reduced from 400ms to 150ms — fast enough for CSS fade, no perceptible freeze
             const timeout = setTimeout(() => {

@@ -14,19 +14,24 @@ export default function CustomCursor() {
     useEffect(() => {
         // Detect touch devices
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsTouchDevice(isTouch);
-        if (isTouch) return;
+
+        if (isTouch) {
+            return () => { }; // Safe empty cleanup for mobile
+        }
 
         const pos = { x: 0, y: 0 };
         const ring = { x: 0, y: 0 };
         let isMoving = false;
         let idleTimer: ReturnType<typeof setTimeout>;
         let animId: number;
+        let debounceTimer: ReturnType<typeof setTimeout>;
 
         const onMouseMove = (e: MouseEvent) => {
             pos.x = e.clientX;
             pos.y = e.clientY;
-            if (!isVisible) setIsVisible(true);
+            setIsVisible(true);
 
             if (dotRef.current) {
                 dotRef.current.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
@@ -69,7 +74,6 @@ export default function CustomCursor() {
 
         // Observe interactive elements — debounced
         const interactiveSelectors = 'a, button, [role="button"], input, textarea, select, .interactive';
-        let debounceTimer: ReturnType<typeof setTimeout>;
 
         const attachListeners = () => {
             // Debounce: only re-attach after 500ms of DOM stability
@@ -102,7 +106,15 @@ export default function CustomCursor() {
         };
     }, []); // Only initialize once — removed isVisible dependency
 
-    if (isTouchDevice) return null;
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMounted(true);
+    }, []);
+
+    // To prevent hydration errors and unwanted rendering on touch devices,
+    // we simply return null until the component is mounted on the client.
+    if (!mounted || isTouchDevice) return null;
 
     return (
         <>

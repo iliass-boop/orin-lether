@@ -1,0 +1,44 @@
+{
+    "project": "Orin Leather",
+    "model": "Veo 3.1 - Quality",
+    "global_style_parameters": {
+        "aesthetic": "Cinematic, ultra-premium luxury, hyper-realistic, 8k resolution, macro-photography details",
+        "lighting": "Dramatic studio lighting, chiaroscuro, pure black background (Obsidian), soft amber rim light highlighting the full-grain leather texture, deep rich shadows",
+        "camera": "Slow, deliberate, heavy, smooth motion. Shallow depth of field, sharp focus on the product, subtle bokeh.",
+        "environment": "Void/pure black to seamlessly blend with the #1A1A1A website background. No floor or distracting elements. Occasional subtle, slow-moving dust particles illuminated by the key light."
+    },
+    "prompts": {
+        "hero_banner": {
+            "image_input": "hero-banner.png",
+            "position_in_site": "Hero Section (Top of the page, full width)",
+            "veo_prompt": "Cinematic 3D showcase of a premium leather bag collection. The image translates into a hyper-realistic 3D scene. The bags slowly emerge from pure black shadows. Soft, warm directional light sweeps slowly across the textured full-grain leather, revealing scratches, pores, and rich patina. The camera executes a very slow, majestic dolly-in push, with a subtle 5-degree pan to emphasize the depth and weight of the leather goods. High contrast, moody, photorealistic, premium luxury commercial style."
+        },
+        "drifter_weekender": {
+            "image_input": "drifter-hero.png",
+            "position_in_site": "Horizontal Scroll Product Showcase",
+            "veo_prompt": "A single ultra-premium leather weekender bag floating gracefully in a pitch-black void. The bag is perfectly isolated with no background. The camera orbits slowly around the bag at a 15-degree angle, showcasing the thick leather folds and solid brass hardware. A sharp, warm rim light traces the perimeter of the bag, emphasizing the raw edges. The motion is extremely smooth and fluid, looping seamlessly. 8k, hyper-detailed leather grain, cinematic studio lighting."
+        },
+        "folio_briefcase": {
+            "image_input": "folio-hero.png",
+            "position_in_site": "Horizontal Scroll Product Showcase",
+            "veo_prompt": "A sleek, black leather laptop briefcase (The Folio) floating in an obsidian void. The camera performs a slow tilt-up while zooming in slightly to focus on the brass zipper and reinforced handle. A cool-toned elegant light softly reflects off the semi-gloss black leather surface, highlighting its structured, professional silhouette. Hyper-realistic, dramatic luxury fashion product shot, slow motion, shallow depth of field."
+        },
+        "nomad_satchel": {
+            "image_input": "nomad-hero.png",
+            "position_in_site": "Horizontal Scroll Product Showcase",
+            "veo_prompt": "A saddle-brown leather crossbody satchel floating against a pure black background. The bag gently rotates on its Y-axis by 20 degrees back and forth. Strong macro focus on the magnetic front closure and the rich, warm tones of the saddle leather. The lighting is intimate and warm, casting deep, moving shadows that highlight the natural imperfections and high quality of the vegetable-tanned hide. Cinematic, 8k, photorealistic."
+        },
+        "ridge_wallet": {
+            "image_input": "ridge-hero.png",
+            "position_in_site": "Horizontal Scroll Product Showcase",
+            "veo_prompt": "An ultra-slim, natural tan leather bifold wallet suspended in pitch black darkness. The camera does an extreme close-up macro pan across the hand-stitched edges, revealing the precise craftsmanship and the fibrous edge of the leather. The wallet slowly rotates slightly to catch a glint of light. Deep, rich shadows, studio macro photography, 8k, extremely textural and tactile."
+        }
+    },
+    "generation_instructions_for_veo": [
+        "Upload the corresponding image as the base visual anchor.",
+        "Paste the 'veo_prompt' directly into the text input.",
+        "Ensure 'Veo 3.1 - Quality' is selected.",
+        "Generate at the highest resolution (1080p or 4k).",
+        "Once generated, export as an mp4 or webm. WebM with a transparent alpha channel is highly recommended if Veo supports it, otherwise keep the background pure black (#000000 to match the site's #1A1A1A with CSS blending)."
+    ]
+}

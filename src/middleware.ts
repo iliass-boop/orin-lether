@@ -193,7 +193,11 @@ export function middleware(request: NextRequest) {
     }
 
     // 6. CSRF protection for state-changing methods
-    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+    // /api/checkout is exempt — Stripe's server-side validation + idempotency protects it.
+    const CSRF_EXEMPT = ['/api/checkout', '/api/webhooks'];
+    const isCsrfExempt = CSRF_EXEMPT.some((p) => pathname.startsWith(p));
+
+    if (!isCsrfExempt && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
         const csrfHeader = request.headers.get('x-csrf-token');
         const csrfCookie = request.cookies.get('csrf-token')?.value;
 

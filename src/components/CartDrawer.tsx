@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './CartDrawer.module.css';
@@ -10,6 +10,8 @@ import { formatPrice } from '@/lib/formatPrice';
 export default function CartDrawer() {
     const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice } = useCartStore();
     const drawerRef = useRef<HTMLElement>(null);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
 
     // Lock body scroll when cart is open
     useEffect(() => {
@@ -75,7 +77,7 @@ export default function CartDrawer() {
                     <div>
                         <span className={styles.title}>Your Cart</span>
                         <span className={styles.itemCount}>
-                            {totalItems()} {totalItems() === 1 ? 'item' : 'items'}
+                            {mounted ? totalItems() : 0} {(mounted ? totalItems() : 0) === 1 ? 'item' : 'items'}
                         </span>
                     </div>
                     <button className={styles.closeBtn} onClick={closeCart} aria-label="Close cart">
@@ -87,7 +89,7 @@ export default function CartDrawer() {
                 </div>
 
                 {/* Items or Empty State */}
-                {items.length === 0 ? (
+                {!mounted || items.length === 0 ? (
                     <div className={styles.empty}>
                         <div className={styles.emptyIcon}>◇</div>
                         <h3 className={styles.emptyTitle}>Your cart is empty</h3>

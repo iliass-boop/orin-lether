@@ -5,7 +5,7 @@
 - **UI Library:** React v19.2.3
 - **State Management:** Zustand (v5.0.11) with persist middleware.
 - **Styling:** CSS Modules with a centralized `globals.css` design system.
-- **Animation:** GSAP (v3.14.2) + `@gsap/react`, Lenovo Lenis for smooth scrolling.
+- **Animation:** GSAP (v3.14.2) + `@gsap/react`, Lenis for smooth scrolling.
 
 ### Directory Structure Assessment
 The structure adheres to modern Next.js best practices:

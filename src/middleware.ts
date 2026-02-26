@@ -37,7 +37,10 @@ function getSecurityHeaders(): Record<string, string> {
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: blob: https:",
-            "connect-src 'self' https: wss: ws: https://api.stripe.com",
+            // Fix: tighten connect-src — restrict ws/wss and broad https: to dev only
+            isDev
+                ? "connect-src 'self' https://api.stripe.com https: ws: wss:"
+                : "connect-src 'self' https://api.stripe.com",
             "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
             "frame-ancestors 'none'",
             "base-uri 'self'",
@@ -75,9 +78,20 @@ function generateCSRFToken(): string {
 }
 
 // --- Extract real IP from request ---
+// Fix: prefer server-populated, hard-to-spoof headers before x-forwarded-for;
+// avoid shared 'unknown' bucket that collapses all anonymous users.
 function getClientIp(request: NextRequest): string {
-    const forwarded = request.headers.get('x-forwarded-for');
-    return forwarded?.split(',')[0]?.trim() ?? 'unknown';
+    const cfIp = request.headers.get('cf-connecting-ip');
+    const realIp = request.headers.get('x-real-ip');
+    const forwarded = request.headers.get('x-forwarded-for')
+        ?.split(',')
+        .map((v) => v.trim())
+        .find(Boolean);
+    const ip = cfIp ?? realIp ?? forwarded;
+    if (ip) return ip;
+    // Non-colliding fallback — never merges all anon users into one rate-limit key
+    const ua = request.headers.get('user-agent') ?? 'no-ua';
+    return 'anon-' + ua.slice(0, 64);
 }
 
 // --- Main Middleware (async for Redis calls) ---
@@ -90,7 +104,8 @@ export async function middleware(request: NextRequest) {
     if (
         pathname.startsWith('/_next') ||
         pathname.startsWith('/images') ||
-        /\.(?:[a-z0-9]{1,8})$/i.test(pathname)
+        // Fix: exclude /api paths — prevents /api/foo.json from bypassing middleware
+        (!pathname.startsWith('/api') && /\.(?:[a-z0-9]{1,8})$/i.test(pathname))
     ) {
         return NextResponse.next();
     }
@@ -115,7 +130,8 @@ export async function middleware(request: NextRequest) {
             const { limited, limit, remaining, resetAt } = await checkRateLimit(ip, isCheckout);
 
             if (limited) {
-                const retryAfterSeconds = Math.ceil((resetAt - Date.now()) / 1000);
+                // Fix: clamp to minimum 1 to prevent 0 or negative Retry-After values
+                const retryAfterSeconds = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
                 return new NextResponse(
                     JSON.stringify({
                         error: 'Too many requests. Please slow down.',

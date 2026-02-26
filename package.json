@@ -6,26 +6,37 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:load:smoke": "k6 run load-tests/smoke.js",
+    "test:load": "k6 run load-tests/load.js",
+    "test:load:spike": "k6 run load-tests/spike.js",
+    "test:load:checkout": "k6 run load-tests/scenarios/checkout.js"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@react-email/components": "^1.0.8",
+    "@sentry/nextjs": "^10.40.0",
     "@stripe/react-stripe-js": "^5.6.0",
     "@stripe/stripe-js": "^8.8.0",
-    "@types/three": "^0.183.1",
+    "@supabase/supabase-js": "^2.97.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.2",
     "ffmpeg-static": "^5.3.0",
     "gsap": "^3.14.2",
+    "inngest": "^3.52.3",
     "lenis": "^1.3.17",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "resend": "^6.9.2",
     "stripe": "^20.3.1",
-    "zustand": "^5.0.11"
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.183.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "typescript": "^5"

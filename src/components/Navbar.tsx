@@ -6,6 +6,9 @@ import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/lib/store';
 import styles from './Navbar.module.css';
 import gsap from 'gsap';
+import dynamic from 'next/dynamic';
+
+const CurrencySelector = dynamic(() => import('./CurrencySelector'), { ssr: false });
 
 const navLinks = [
     { href: '/products', label: 'Shop' },
@@ -121,6 +124,8 @@ export default function Navbar() {
                     </div>
 
                     <div className={styles.navRight}>
+                        <CurrencySelector />
+
                         <button className={styles.cartButton} onClick={toggleCart} aria-label="Open cart">
                             <div className={styles.cartIcon}>
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

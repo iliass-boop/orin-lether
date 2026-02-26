@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type { CurrencyCode } from './currency';
 
 /* ========================================
    ORIN — Product Data & Cart Store
@@ -52,6 +53,9 @@ interface CartStore {
     totalPrice: () => number;
     wishlist: string[];
     toggleWishlist: (productId: string) => void;
+    // --- Currency ---
+    currency: CurrencyCode;
+    setCurrency: (currency: CurrencyCode) => void;
 }
 
 // --- Products ---
@@ -77,7 +81,6 @@ export const products: Product[] = [
         images: ['/images/products/drifter_hero_1771640197945.png', '/images/products/drifter_detail_1771640218427.png', '/images/products/drifter_lifestyle_1771640245076.png'],
         color: { name: 'Cognac', hex: '#8B5E3C', slug: 'cognac' },
         bestseller: true,
-        model3dUrl: '/models/placeholder.glb', // Added for testing 3D viewer implementation
         model3dImages: [
             '/images/products/drifter/spin/drifter_spin_000_1771797867059.png',
             '/images/products/drifter/spin/drifter_spin_030_1771797908041.png',
@@ -342,12 +345,16 @@ export const useCartStore = create<CartStore>()(
                     };
                 });
             },
+
+            // --- Currency ---
+            currency: 'USD',
+            setCurrency: (currency) => set({ currency }),
         }),
         {
             name: 'orin-cart-storage',
             storage: createJSONStorage(() => localStorage),
-            // Only persist cart items and wishlist — not UI state like isOpen
-            partialize: (state) => ({ items: state.items, wishlist: state.wishlist }),
+            // Persist cart items, wishlist, and currency preference
+            partialize: (state) => ({ items: state.items, wishlist: state.wishlist, currency: state.currency }),
         }
     )
 );

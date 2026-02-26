@@ -64,7 +64,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             {/* Cursor-following glow */}
             <div className={styles.cardGlow} ref={glowRef} />
 
-            <div className={styles.imageWrapper} ref={imageRef}>
+            <div className={styles.imageWrapper} ref={imageRef} data-cursor="view">
                 {/* Badge */}
                 {product.bestseller && (
                     <span className={`${styles.badge} ${styles.badgeBestseller}`}>Bestseller</span>
@@ -86,7 +86,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
                 {/* Hover overlay */}
                 <div className={styles.imageOverlay}>
-                    <button className={styles.quickAdd} onClick={handleQuickAdd} aria-label={`Quick add ${product.name}`}>
+                    <button className={styles.quickAdd} data-cursor="cta" onClick={handleQuickAdd} aria-label={`Quick add ${product.name}`}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                             <line x1="3" y1="6" x2="21" y2="6" />

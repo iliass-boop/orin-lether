@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import styles from './page.module.css';
 import ProductCard from '@/components/ProductCard';
 import { products } from '@/lib/store';
@@ -74,8 +74,6 @@ export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLVideoElement>(null);
-  const horizontalRef = useRef<HTMLDivElement>(null);
-  const horizontalInnerRef = useRef<HTMLDivElement>(null);
 
   // Refs for animated elements (avoids fragile global class selectors)
   const heroLinesRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -213,6 +211,10 @@ export default function HomePage() {
     }
   };
 
+  // Newsletter subscription state
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+
   return (
     <div ref={containerRef}>
       {/* ===== Cinematic Hero ===== */}
@@ -225,6 +227,8 @@ export default function HomePage() {
             loop
             muted
             playsInline
+            aria-hidden="true"
+            poster="/images/brand/hero-poster.jpg"
             className={styles.heroImage}
           />
           <div className={styles.heroOverlay} />
@@ -330,8 +334,8 @@ export default function HomePage() {
       </section>
 
       {/* ===== Horizontal Scroll Showcase ===== */}
-      <section className={styles.horizontalSection} ref={horizontalRef}>
-        <div className={styles.horizontalInner} ref={horizontalInnerRef}>
+      <section className={styles.horizontalSection}>
+        <div className={styles.horizontalInner}>
           {/* Intro Panel */}
           <div className={styles.horizontalIntro}>
             <p className={styles.sectionLabel}>The Collection</p>
@@ -471,21 +475,38 @@ export default function HomePage() {
               First access to new pieces, behind-the-scenes craft stories,
               and the occasional leather care tip. No noise.
             </p>
-            <form className={styles.newsletterForm} onSubmit={(e) => e.preventDefault()}>
-              <div className={styles.newsletterInputWrapper}>
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className={styles.newsletterInput}
-                  required
-                />
-                <button type="submit" className={styles.newsletterBtn}>
-                  Subscribe
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+            <form
+              className={styles.newsletterForm}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newsletterEmail.trim()) return;
+                // Show success state (integrate with email provider here)
+                setNewsletterSubscribed(true);
+                setNewsletterEmail('');
+              }}
+            >
+              {newsletterSubscribed ? (
+                <p style={{ color: '#c9a96e', textAlign: 'center', fontFamily: 'var(--font-body)', letterSpacing: '0.05em' }}>
+                  ✓ You&apos;re on the list.
+                </p>
+              ) : (
+                <div className={styles.newsletterInputWrapper}>
+                  <input
+                    type="email"
+                    placeholder="Your email"
+                    className={styles.newsletterInput}
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    required
+                  />
+                  <button type="submit" className={styles.newsletterBtn}>
+                    Subscribe
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         </div>

@@ -3,129 +3,123 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './CustomCursor.module.css';
 
+/* ============================================================
+   CustomCursor — Context-Aware Luxury Cursor
+
+   States:
+   - default:  dot + trailing ring
+   - hovering: ring expands
+   - view:     on product images → shows "VIEW" label
+   - cta:      on primary buttons/cart → cognac fill
+   - clicking: dot scales down (click feedback)
+   - touch:    not rendered
+   ============================================================ */
+
+type CursorMode = 'default' | 'hovering' | 'view' | 'drag' | 'cta';
+
 export default function CustomCursor() {
     const dotRef = useRef<HTMLDivElement>(null);
     const ringRef = useRef<HTMLDivElement>(null);
-    const [isHovering, setIsHovering] = useState(false);
+    const [mode, setMode] = useState<CursorMode>('default');
     const [isClicking, setIsClicking] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const [isTouchDevice, setIsTouchDevice] = useState(false);
 
-    useEffect(() => {
-        // Detect touch devices
-        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsTouchDevice(isTouch);
+    useEffect(() => { setMounted(true); }, []);
 
-        if (isTouch) {
-            return () => { }; // Safe empty cleanup for mobile
-        }
+    useEffect(() => {
+        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        setIsTouchDevice(isTouch);
+        if (isTouch) return;
 
         const pos = { x: 0, y: 0 };
         const ring = { x: 0, y: 0 };
-        let isMoving = false;
-        let idleTimer: ReturnType<typeof setTimeout>;
         let animId: number;
-        let debounceTimer: ReturnType<typeof setTimeout>;
 
-        const onMouseMove = (e: MouseEvent) => {
+        const onMove = (e: MouseEvent) => {
             pos.x = e.clientX;
             pos.y = e.clientY;
             setIsVisible(true);
-
             if (dotRef.current) {
                 dotRef.current.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
             }
-
-            // Resume ring animation if it was paused
-            if (!isMoving) {
-                isMoving = true;
-                animId = requestAnimationFrame(animateRing);
-            }
-
-            // Pause ring animation after 100ms of no mouse movement
-            clearTimeout(idleTimer);
-            idleTimer = setTimeout(() => {
-                isMoving = false;
-            }, 100);
         };
 
-        const onMouseDown = () => setIsClicking(true);
-        const onMouseUp = () => setIsClicking(false);
-
-        const onMouseEnterInteractive = () => setIsHovering(true);
-        const onMouseLeaveInteractive = () => setIsHovering(false);
-
-        // Smooth ring follow — only runs when mouse is moving
         const animateRing = () => {
-            ring.x += (pos.x - ring.x) * 0.15;
-            ring.y += (pos.y - ring.y) * 0.15;
+            ring.x += (pos.x - ring.x) * 0.12;
+            ring.y += (pos.y - ring.y) * 0.12;
             if (ringRef.current) {
                 ringRef.current.style.transform = `translate(${ring.x}px, ${ring.y}px)`;
             }
-            if (isMoving) {
-                animId = requestAnimationFrame(animateRing);
+            animId = requestAnimationFrame(animateRing);
+        };
+        animId = requestAnimationFrame(animateRing);
+
+        const onDown = () => setIsClicking(true);
+        const onUp = () => setIsClicking(false);
+
+        document.addEventListener('mousemove', onMove, { passive: true });
+        document.addEventListener('mousedown', onDown);
+        document.addEventListener('mouseup', onUp);
+
+        // Context-aware mode detection
+        const updateMode = (e: MouseEvent) => {
+            const target = e.target as Element;
+
+            // Product images / image containers → VIEW
+            if (target.closest('[data-cursor="view"]') || target.closest('.productImageWrapper')) {
+                setMode('view');
+                return;
             }
+            // Drag / 3D viewer zones
+            if (target.closest('[data-cursor="drag"]')) {
+                setMode('drag');
+                return;
+            }
+            // CTAs: add-to-cart, checkout, primary buttons
+            if (target.closest('[data-cursor="cta"]') || target.closest('button[class*="cartButton"]') || target.closest('button[class*="addToCart"]') || target.closest('a[class*="btn"]')) {
+                setMode('cta');
+                return;
+            }
+            // General interactive hover
+            if (target.closest('a, button, [role="button"], input, select, textarea')) {
+                setMode('hovering');
+                return;
+            }
+            setMode('default');
         };
 
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mousedown', onMouseDown);
-        document.addEventListener('mouseup', onMouseUp);
-
-        // Observe interactive elements — debounced
-        const interactiveSelectors = 'a, button, [role="button"], input, textarea, select, .interactive';
-
-        const attachListeners = () => {
-            // Debounce: only re-attach after 500ms of DOM stability
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                document.querySelectorAll(interactiveSelectors).forEach((el) => {
-                    el.addEventListener('mouseenter', onMouseEnterInteractive);
-                    el.addEventListener('mouseleave', onMouseLeaveInteractive);
-                });
-            }, 500);
-        };
-
-        attachListeners();
-        // Re-attach on DOM changes (debounced)
-        const observer = new MutationObserver(attachListeners);
-        observer.observe(document.body, { childList: true, subtree: true });
+        document.addEventListener('mousemove', updateMode, { passive: true });
 
         return () => {
             cancelAnimationFrame(animId);
-            clearTimeout(idleTimer);
-            clearTimeout(debounceTimer);
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mousedown', onMouseDown);
-            document.removeEventListener('mouseup', onMouseUp);
-            observer.disconnect();
-            document.querySelectorAll(interactiveSelectors).forEach((el) => {
-                el.removeEventListener('mouseenter', onMouseEnterInteractive);
-                el.removeEventListener('mouseleave', onMouseLeaveInteractive);
-            });
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mousemove', updateMode);
+            document.removeEventListener('mousedown', onDown);
+            document.removeEventListener('mouseup', onUp);
         };
-    }, []); // Only initialize once — removed isVisible dependency
-
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMounted(true);
     }, []);
 
-    // To prevent hydration errors and unwanted rendering on touch devices,
-    // we simply return null until the component is mounted on the client.
     if (!mounted || isTouchDevice) return null;
+
+    const label = mode === 'view' ? 'VIEW' : mode === 'drag' ? 'DRAG' : null;
 
     return (
         <>
+            {/* Center dot — instant tracking */}
             <div
                 ref={dotRef}
-                className={`${styles.dot} ${isVisible ? styles.visible : ''} ${isClicking ? styles.clicking : ''}`}
+                className={`${styles.dot} ${isVisible ? styles.visible : ''} ${isClicking ? styles.clicking : ''} ${styles[`mode_${mode}`] || ''}`}
             />
+
+            {/* Trailing ring — lerped */}
             <div
                 ref={ringRef}
-                className={`${styles.ring} ${isVisible ? styles.visible : ''} ${isHovering ? styles.hovering : ''} ${isClicking ? styles.clicking : ''}`}
-            />
+                className={`${styles.ring} ${isVisible ? styles.visible : ''} ${isClicking ? styles.clicking : ''} ${styles[`mode_${mode}`] || ''}`}
+            >
+                {label && <span className={styles.label}>{label}</span>}
+            </div>
         </>
     );
 }

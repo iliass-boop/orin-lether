@@ -2,16 +2,20 @@
 
 import { Suspense, useState, useCallback, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import Image from 'next/image';
 import styles from './page.module.css';
 import ProductCard from '@/components/ProductCard';
 import { products, categories } from '@/lib/store';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useReveal } from '@/hooks/useReveal';
 
 function ProductsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
+
+    const headerRef = useReveal<HTMLDivElement>({ preset: 'staggerChildren', stagger: 0.12, start: 'top 95%' });
+    const controlRef = useReveal<HTMLDivElement>({ preset: 'fadeUp', delay: 0.1, start: 'top 95%' });
+    const gridRef = useReveal<HTMLDivElement>({ preset: 'staggerChildren', stagger: 0.08, start: 'top 90%' });
 
     // The URL is the Single Source of Truth for the active category
     const activeCategory = searchParams.get('category') || 'all';
@@ -75,7 +79,7 @@ function ProductsContent() {
                     />
                     <div className={styles.headerOverlay} />
                 </div>
-                <div className={styles.headerInner}>
+                <div className={styles.headerInner} ref={headerRef}>
                     <p className={styles.accent}>The Essentials Collection</p>
                     <h1 className={styles.title}>Our Collection</h1>
                     <p className={styles.description}>
@@ -86,7 +90,7 @@ function ProductsContent() {
             </header>
 
             {/* Controls */}
-            <div className={styles.controls}>
+            <div className={styles.controls} ref={controlRef}>
                 {/* Search */}
                 <div className={styles.searchWrapper}>
                     <input
@@ -124,7 +128,7 @@ function ProductsContent() {
                     <p className={styles.resultCount}>
                         {filteredProducts.length} {filteredProducts.length === 1 ? 'piece' : 'pieces'}
                     </p>
-                    <div className={styles.grid}>
+                    <div className={styles.grid} ref={gridRef}>
                         {filteredProducts.map((product) => (
                             <ProductCard key={product.id} product={product} />
                         ))}

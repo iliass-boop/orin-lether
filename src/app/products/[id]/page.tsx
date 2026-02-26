@@ -10,7 +10,7 @@ import { useToast } from '@/components/Toast';
 import ReviewSection from '@/components/ReviewSection';
 import { formatPrice } from '@/lib/formatPrice';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import Product3DViewer from '@/components/Product3DViewer';
 
@@ -40,31 +40,25 @@ export default function ProductDetailPage() {
     useGSAP(() => {
         if (!detailsRef.current || !galleryRef.current || product.images.length <= 1) return;
 
-        // Set up ScrollTrigger to scrub through images based on scroll depth in details section
-        ScrollTrigger.create({
+        // Store reference so cleanup only kills THIS trigger, not all triggers on page
+        const st = ScrollTrigger.create({
             trigger: detailsRef.current,
-            start: "top top+=100", // Start when details top hits near top of viewport
-            end: "bottom bottom-=100", // End when details bottom hits near bottom
+            start: "top top+=100",
+            end: "bottom bottom-=100",
             scrub: true,
             onUpdate: (self) => {
-                // Calculate which image to show based on progress (0 to 1)
                 const progress = self.progress;
                 const totalImages = product.images.length;
-
-                // Map progress to an image index
-                // progress 0 = img 0, progress 0.99 = last img
                 const index = Math.min(
                     Math.floor(progress * totalImages),
                     totalImages - 1
                 );
-
                 setActiveImage(index);
             }
         });
 
-        // Cleanup
         return () => {
-            ScrollTrigger.getAll().forEach(t => t.kill());
+            st.kill();
         };
     }, { dependencies: [product.images.length], scope: detailsRef });
 
@@ -127,27 +121,30 @@ export default function ProductDetailPage() {
                             >
                                 Gallery
                             </button>
-                            <button
-                                onClick={() => setIs3DViewActive(true)}
-                                style={{
-                                    background: is3DViewActive ? '#c9a96e' : 'transparent',
-                                    color: is3DViewActive ? '#0a0a0a' : '#f5f0e8',
-                                    border: '1px solid #c9a96e',
-                                    padding: '0.4rem 1rem',
-                                    borderRadius: '100px',
-                                    fontSize: '0.75rem',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.1em',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.4rem'
-                                }}
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                3D Explore
-                            </button>
+                            {/* Only show 3D button when spin images are available */}
+                            {product.model3dImages && product.model3dImages.length > 0 && (
+                                <button
+                                    onClick={() => setIs3DViewActive(true)}
+                                    style={{
+                                        background: is3DViewActive ? '#c9a96e' : 'transparent',
+                                        color: is3DViewActive ? '#0a0a0a' : '#f5f0e8',
+                                        border: '1px solid #c9a96e',
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '100px',
+                                        fontSize: '0.75rem',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.1em',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.4rem'
+                                    }}
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                    3D Explore
+                                </button>
+                            )}
                         </div>
 
                         <div className={styles.mainImage}>

@@ -18,7 +18,7 @@ export const escapeHtml = (unsafe: string): string => {
  * Strips all HTML tags from a string.
  */
 export const stripHtml = (html: string): string => {
-    return html.replace(/<[^>]*>?/gm, '');
+    return html.replace(/<[^>]*>?/g, '');
 };
 
 /**

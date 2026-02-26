@@ -24,7 +24,7 @@ function getStripe(): Stripe {
 // Proxy keeps call-sites identical to the previous `stripe.paymentIntents.create(…)` API.
 const stripe = new Proxy({} as Stripe, {
     get(_target, prop) {
-        return (getStripe() as Record<string | symbol, unknown>)[prop as string];
+        return (getStripe() as unknown as Record<string | symbol, unknown>)[prop as string];
     },
 });
 

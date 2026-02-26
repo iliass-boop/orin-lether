@@ -18,7 +18,33 @@ import {
 import { sanitizeTextInput, isValidEmail } from '@/lib/utils/sanitize';
 
 // ── Stripe init (once, outside render tree) ─────────────────────────
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+
+// ── Stripe appearance (module-level constant prevents re-creation on every render) ──
+const STRIPE_APPEARANCE = {
+    theme: 'night' as const,
+    variables: {
+        colorPrimary: '#c9a96e',
+        colorBackground: '#1a1a1a',
+        colorText: '#f0ece4',
+        colorDanger: '#e07070',
+        fontFamily: 'var(--font-body), sans-serif',
+        borderRadius: '0px',
+        colorTextPlaceholder: '#444',
+        colorIcon: '#888',
+    },
+    rules: {
+        '.Input': { border: '1px solid #2a2a2a', boxShadow: 'none', backgroundColor: '#1a1a1a', color: '#f0ece4', padding: '12px 14px' },
+        '.Input:focus': { border: '1px solid #c9a96e', boxShadow: 'none' },
+        '.Label': { color: '#666', textTransform: 'uppercase' as const, letterSpacing: '0.1em', fontSize: '11px' },
+        '.Tab': { border: '1px solid #2a2a2a', backgroundColor: '#161616' },
+        '.Tab--selected': { border: '1px solid #c9a96e', color: '#c9a96e', backgroundColor: '#1a1a1a' },
+        '.TabLabel': { color: '#888' },
+        '.TabLabel--selected': { color: '#c9a96e' },
+        '.TabIcon--selected': { fill: '#c9a96e' },
+    },
+};
 
 // ── Countries ────────────────────────────────────────────────────────
 const COUNTRIES = [
@@ -71,6 +97,10 @@ function getFieldError(field: keyof FormData, value: string): string {
     if (field === 'address' && !value.trim()) return 'Street address is required';
     if (field === 'city' && !value.trim()) return 'City is required';
     if (field === 'country' && !value) return 'Country is required';
+    if (field === 'zip' && value.trim() && !/^[A-Za-z0-9\s-]{3,10}$/.test(value.trim()))
+        return 'Enter a valid postal code';
+    if (field === 'state' && value.trim() && value.trim().length > 50)
+        return 'State / Region is too long';
     return '';
 }
 
@@ -107,13 +137,13 @@ const PaymentForm = ({
             confirmParams: {
                 receipt_email: sanitizeTextInput(formData.email),
                 shipping: {
-                    name: `${formData.firstName} ${formData.lastName}`.trim(),
-                    phone: formData.phone,
+                    name: `${sanitizeTextInput(formData.firstName)} ${sanitizeTextInput(formData.lastName)}`.trim(),
+                    phone: sanitizeTextInput(formData.phone),
                     address: {
-                        line1: formData.address,
-                        city: formData.city,
-                        state: formData.state,
-                        postal_code: formData.zip,
+                        line1: sanitizeTextInput(formData.address),
+                        city: sanitizeTextInput(formData.city),
+                        state: sanitizeTextInput(formData.state),
+                        postal_code: sanitizeTextInput(formData.zip),
                         country: formData.country || 'US',
                     },
                 },
@@ -249,7 +279,7 @@ export default function CheckoutPage() {
     // Hydration guard
     useEffect(() => { setMounted(true); }, []);
 
-    // Fetch PaymentIntent
+    // Fetch PaymentIntent — runs whenever mounted state or cart items change
     const fetchIntent = useCallback(() => {
         if (!mounted || items.length === 0) return;
         setInitError('');
@@ -270,12 +300,9 @@ export default function CheckoutPage() {
             });
     }, [mounted, items]);
 
-    // Auto-fetch on mount + on retry
-    const hasInit = useRef(false);
+    // Auto-fetch on mount + when items change + on manual retry
     useEffect(() => {
         if (!mounted) return;
-        if (hasInit.current && retryCount === 0) return;
-        hasInit.current = true;
         fetchIntent();
     }, [mounted, fetchIntent, retryCount]);
 
@@ -299,6 +326,23 @@ export default function CheckoutPage() {
     const cartTotal = mounted ? totalPrice() : 0;
     const totalQty = mounted ? items.reduce((s, i) => s + i.quantity, 0) : 0;
 
+    // ── Missing Stripe key guard ──
+    if (!stripePublishableKey) {
+        return (
+            <div className={styles.page}>
+                <header className={styles.topBar}>
+                    <Link href="/" className={styles.topBarLogo}>ORI<span>N</span></Link>
+                </header>
+                <div className={styles.emptyState}>
+                    <p className={styles.emptyGlyph}>!</p>
+                    <h2 className={styles.emptyTitle}>Checkout Unavailable</h2>
+                    <p className={styles.emptyText}>Payment configuration is missing. Please contact support.</p>
+                    <Link href="/products" className={styles.browseBtn}>Continue Shopping</Link>
+                </div>
+            </div>
+        );
+    }
+
     // ── Empty cart ──
     if (mounted && items.length === 0) {
         return (
@@ -317,31 +361,6 @@ export default function CheckoutPage() {
             </div>
         );
     }
-
-    // ── Stripe appearance ──
-    const appearance = {
-        theme: 'night' as const,
-        variables: {
-            colorPrimary: '#c9a96e',
-            colorBackground: '#1a1a1a',
-            colorText: '#f0ece4',
-            colorDanger: '#e07070',
-            fontFamily: 'var(--font-body), sans-serif',
-            borderRadius: '0px',
-            colorTextPlaceholder: '#444',
-            colorIcon: '#888',
-        },
-        rules: {
-            '.Input': { border: '1px solid #2a2a2a', boxShadow: 'none', backgroundColor: '#1a1a1a', color: '#f0ece4', padding: '12px 14px' },
-            '.Input:focus': { border: '1px solid #c9a96e', boxShadow: 'none' },
-            '.Label': { color: '#666', textTransform: 'uppercase' as const, letterSpacing: '0.1em', fontSize: '11px' },
-            '.Tab': { border: '1px solid #2a2a2a', backgroundColor: '#161616' },
-            '.Tab--selected': { border: '1px solid #c9a96e', color: '#c9a96e', backgroundColor: '#1a1a1a' },
-            '.TabLabel': { color: '#888' },
-            '.TabLabel--selected': { color: '#c9a96e' },
-            '.TabIcon--selected': { fill: '#c9a96e' },
-        },
-    };
 
     return (
         <div className={styles.page}>
@@ -500,7 +519,7 @@ export default function CheckoutPage() {
                             </button>
                         </div>
                     ) : clientSecret ? (
-                        <Elements options={{ clientSecret, appearance, locale: 'en' }} stripe={stripePromise}>
+                        <Elements options={{ clientSecret, appearance: STRIPE_APPEARANCE, locale: 'en' }} stripe={stripePromise}>
                             <PaymentForm formData={formData} totalPrice={cartTotal} onValidate={validateAll} />
                         </Elements>
                     ) : (

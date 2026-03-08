@@ -82,6 +82,20 @@ export default function HomePage() {
   const testimonialCardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const revealTextsRef = useRef<(HTMLElement | null)[]>([]);
 
+  // New refs for premium animations
+  const philosophyImageRef = useRef<HTMLDivElement>(null);
+  const marqueeTrackRef = useRef<HTMLDivElement>(null);
+  const marqueeSectionRef = useRef<HTMLDivElement>(null);
+  const newsletterSectionRef = useRef<HTMLDivElement>(null);
+  const ctaSectionRef = useRef<HTMLDivElement>(null);
+  const sectionLabelsRef = useRef<(HTMLElement | null)[]>([]);
+
+  const addSectionLabel = (el: HTMLElement | null) => {
+    if (el && !sectionLabelsRef.current.includes(el)) {
+      sectionLabelsRef.current.push(el);
+    }
+  };
+
   useGSAP(() => {
     // --- Hero image parallax ---
     if (heroImageRef.current && heroRef.current) {
@@ -131,10 +145,57 @@ export default function HomePage() {
       }
     }
 
-    // --- Horizontal Scroll Showcase ---
-    // Uses native CSS overflow-x scroll (no GSAP pin — avoids Lenis conflicts)
+    // --- Philosophy Image Parallax + Mask Reveal ---
+    if (philosophyImageRef.current) {
+      // Clip-path wipe from bottom
+      gsap.fromTo(
+        philosophyImageRef.current,
+        { clipPath: 'inset(100% 0% 0% 0%)' },
+        {
+          clipPath: 'inset(0% 0% 0% 0%)',
+          duration: 1.4,
+          ease: 'power3.inOut',
+          scrollTrigger: {
+            trigger: philosophyImageRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
 
-    // --- Process Steps Stagger ---
+      // Subtle parallax float on the image
+      gsap.to(philosophyImageRef.current.querySelector('img'), {
+        yPercent: -12,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: philosophyImageRef.current,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.5,
+        },
+      });
+    }
+
+    // --- Section Label Slide-in ---
+    sectionLabelsRef.current.filter(Boolean).forEach((label) => {
+      gsap.fromTo(
+        label!,
+        { x: -40, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: label!,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
+
+    // --- Process Steps Stagger + Progress Bar Animation ---
     processStepsRef.current.filter(Boolean).forEach((step, i) => {
       gsap.fromTo(
         step!,
@@ -148,31 +209,119 @@ export default function HomePage() {
             trigger: step!,
             start: 'top 85%',
             toggleActions: 'play none none none',
+            onEnter: () => step!.classList.add(styles.animated),
           },
           delay: i * 0.1,
         }
       );
     });
 
-    // --- Testimonial Cards ---
-    testimonialCardsRef.current.filter(Boolean).forEach((card) => {
+    // --- Testimonial Cards — Directional Stagger ---
+    testimonialCardsRef.current.filter(Boolean).forEach((card, i) => {
+      const directions = [{ x: -40, rotate: -2 }, { y: 50, rotate: 0 }, { x: 40, rotate: 2 }];
+      const dir = directions[i % directions.length];
       gsap.fromTo(
         card!,
-        { y: 50, opacity: 0, scale: 0.96 },
+        { ...dir, opacity: 0, scale: 0.94 },
         {
+          x: 0,
           y: 0,
+          rotate: 0,
           opacity: 1,
           scale: 1,
-          duration: 0.7,
-          ease: 'power2.out',
+          duration: 0.9,
+          ease: 'power3.out',
           scrollTrigger: {
             trigger: card!,
             start: 'top 85%',
             toggleActions: 'play none none none',
           },
+          delay: i * 0.12,
         }
       );
     });
+
+    // --- Marquee Speed Shift on Scroll ---
+    if (marqueeTrackRef.current && marqueeSectionRef.current) {
+      gsap.to(marqueeTrackRef.current, {
+        animationDuration: '15s',
+        scrollTrigger: {
+          trigger: marqueeSectionRef.current,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+          onEnter: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '15s';
+          },
+          onLeave: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '30s';
+          },
+          onEnterBack: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '15s';
+          },
+          onLeaveBack: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '30s';
+          },
+        },
+      });
+    }
+
+    // --- Newsletter Fade Up ---
+    if (newsletterSectionRef.current) {
+      const nlContent = newsletterSectionRef.current.querySelectorAll('[class*="newsletter"]');
+      gsap.fromTo(
+        nlContent,
+        { y: 50, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.9,
+          stagger: 0.08,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: newsletterSectionRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    }
+
+    // --- CTA Parallax Text ---
+    if (ctaSectionRef.current) {
+      const ctaElements = ctaSectionRef.current.querySelectorAll('h2, p, a');
+      gsap.fromTo(
+        ctaElements,
+        { y: 40, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: ctaSectionRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+
+      // Slight parallax on the CTA title
+      const ctaTitle = ctaSectionRef.current.querySelector('h2');
+      if (ctaTitle) {
+        gsap.to(ctaTitle, {
+          yPercent: -15,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: ctaSectionRef.current,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 2,
+          },
+        });
+      }
+    }
 
     // --- Reveal Texts ---
     revealTextsRef.current.filter(Boolean).forEach((el) => {
@@ -278,8 +427,8 @@ export default function HomePage() {
       </section>
 
       {/* ===== Marquee Divider ===== */}
-      <section className={styles.marqueeDivider}>
-        <div className={styles.marqueeTrack}>
+      <section className={styles.marqueeDivider} ref={marqueeSectionRef}>
+        <div className={styles.marqueeTrack} ref={marqueeTrackRef}>
           {[...Array(3)].map((_, i) => (
             <div key={i} className={styles.marqueeContent}>
               <span>Handcrafted</span>
@@ -299,7 +448,7 @@ export default function HomePage() {
       <section className={styles.philosophy}>
         <div className={styles.philosophyInner}>
           <div className={styles.philosophyContent}>
-            <p className={styles.sectionLabel} ref={addRevealText}>Our Philosophy</p>
+            <p className={styles.sectionLabel} ref={(el) => { addRevealText(el); addSectionLabel(el); }}>Our Philosophy</p>
             <h2 className={styles.philosophyTitle} ref={addRevealText}>
               Worn, Not<br />Worn Out.
             </h2>
@@ -320,7 +469,7 @@ export default function HomePage() {
               </svg>
             </Link>
           </div>
-          <div className={styles.philosophyImageWrapper}>
+          <div className={styles.philosophyImageWrapper} ref={philosophyImageRef}>
             <Image
               src="/images/brand/philosophy-patina.png"
               alt="Beautifully aged ORIN full-grain leather showing rich patina"
@@ -338,7 +487,7 @@ export default function HomePage() {
         <div className={styles.horizontalInner}>
           {/* Intro Panel */}
           <div className={styles.horizontalIntro}>
-            <p className={styles.sectionLabel}>The Collection</p>
+            <p className={styles.sectionLabel} ref={addSectionLabel}>The Collection</p>
             <h2 className={styles.horizontalTitle}>
               Built to Be<br />Carried
             </h2>
@@ -391,7 +540,7 @@ export default function HomePage() {
           {/* Right: Steps */}
           <div className={styles.processStepsCol}>
             <div className={styles.processHeader}>
-              <p className={styles.sectionLabel} ref={addRevealText}>The Process</p>
+              <p className={styles.sectionLabel} ref={(el) => { addRevealText(el); addSectionLabel(el); }}>The Process</p>
               <h2 className={styles.processTitle} ref={addRevealText}>
                 Four Steps.<br />Zero Shortcuts.
               </h2>
@@ -439,7 +588,7 @@ export default function HomePage() {
       {/* ===== Testimonials ===== */}
       <section className={styles.testimonials}>
         <div className={styles.testimonialsInner}>
-          <p className={styles.sectionLabel} ref={addRevealText}>What They Say</p>
+          <p className={styles.sectionLabel} ref={(el) => { addRevealText(el); addSectionLabel(el); }}>What They Say</p>
           <h2 className={styles.testimonialsTitle} ref={addRevealText}>Words From the Road</h2>
 
           <div className={styles.testimonialGrid}>
@@ -466,7 +615,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Newsletter ===== */}
-      <section className={styles.newsletter}>
+      <section className={styles.newsletter} ref={newsletterSectionRef}>
         <div className={styles.newsletterInner}>
           <div className={styles.newsletterContent}>
             <p className={styles.newsletterAccent}>Join the journey</p>
@@ -513,7 +662,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Final CTA ===== */}
-      <section className={styles.ctaBanner}>
+      <section className={styles.ctaBanner} ref={ctaSectionRef}>
         <div className={styles.ctaBannerInner}>
           <p className={styles.ctaAccent} ref={addRevealText}>Your next favorite thing</p>
           <h2 className={styles.ctaTitle} ref={addRevealText}>

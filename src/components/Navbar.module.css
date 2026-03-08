@@ -125,7 +125,7 @@
     border-radius: 50%;
     background: transparent;
     border: none;
-    cursor: none;
+    cursor: pointer;
     transition: all 0.3s var(--ease-out);
     color: var(--ivory);
 }
@@ -189,7 +189,7 @@
     height: 44px;
     border: none;
     background: transparent;
-    cursor: none;
+    cursor: pointer;
     z-index: 9999;
     position: relative;
 }

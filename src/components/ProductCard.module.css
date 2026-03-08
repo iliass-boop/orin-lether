@@ -111,7 +111,7 @@
     text-transform: uppercase;
     border: none;
     border-radius: 30px;
-    cursor: none;
+    cursor: pointer;
     transform: translateY(10px);
     transition: all 0.4s var(--ease-out);
 }

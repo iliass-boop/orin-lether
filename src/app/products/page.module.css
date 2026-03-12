@@ -8,12 +8,36 @@
 
 /* Header */
 .header {
-    padding: var(--space-4xl) 0 var(--space-2xl);
+    position: relative;
+    padding: var(--space-6xl) 0 var(--space-5xl);
     text-align: center;
-    background-color: var(--ivory);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 360px;
+}
+
+.headerImageWrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.headerImage {
+    object-fit: cover;
+}
+
+.headerOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(26, 26, 26, 0.3), rgba(26, 26, 26, 0.7));
+    z-index: 1;
 }
 
 .headerInner {
+    position: relative;
+    z-index: 2;
     max-width: var(--max-width);
     margin: 0 auto;
     padding: 0 var(--space-xl);
@@ -23,22 +47,21 @@
     font-family: var(--font-accent);
     font-size: var(--text-lg);
     font-style: italic;
-    color: var(--saddle);
+    color: var(--sand);
     margin-bottom: var(--space-sm);
 }
 
 .title {
     font-family: var(--font-heading);
-    font-size: var(--text-4xl);
-    color: var(--obsidian);
+    font-size: var(--text-5xl);
+    color: var(--ivory);
     margin-bottom: var(--space-md);
 }
 
 .description {
     font-family: var(--font-body);
     font-size: var(--text-base);
-    color: var(--obsidian);
-    opacity: 0.7;
+    color: var(--stone);
     max-width: 520px;
     margin: 0 auto;
     line-height: 1.7;
@@ -71,28 +94,35 @@
 
 .searchInput {
     width: 100%;
-    padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
+    padding: 0 var(--space-lg) 0 3rem;
+    /* Removed vertical padding */
+    height: 44px;
+    /* Explicit height ensures consistent alignment across browsers */
     border: 1px solid var(--stone);
     border-radius: 100px;
     font-family: var(--font-body);
     font-size: var(--text-sm);
     background: transparent;
-    color: var(--obsidian);
+    color: var(--ivory);
     transition: all var(--duration-normal) var(--ease-out);
+}
+
+.searchInput::placeholder {
+    color: var(--stone);
 }
 
 .searchInput:focus {
     outline: none;
     border-color: var(--saddle);
-    background: var(--ivory);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .searchIcon {
     position: absolute;
-    left: 1rem;
+    left: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-secondary);
+    color: var(--stone);
     pointer-events: none;
 }
 
@@ -151,6 +181,7 @@
 
 @media (max-width: 480px) {
     .grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
     }
 }

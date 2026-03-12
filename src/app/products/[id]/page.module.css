@@ -132,6 +132,22 @@
     object-fit: cover;
 }
 
+.videoThumbnailOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.thumbnail:hover .videoThumbnailOverlay {
+    opacity: 1;
+}
+
 /* Dot indicators (mobile) */
 .dotIndicators {
     display: none;
@@ -600,7 +616,7 @@
 
 @media (max-width: 768px) {
     .page {
-        padding-bottom: 5rem;
+        padding-bottom: calc(6rem + env(safe-area-inset-bottom));
         /* Space for sticky bar */
     }
 

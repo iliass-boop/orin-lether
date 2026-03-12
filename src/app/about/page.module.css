@@ -8,12 +8,38 @@
 
 /* Hero */
 .hero {
-    padding: var(--space-5xl) 0;
+    position: relative;
+    padding: var(--space-7xl) 0 var(--space-5xl);
     background-color: var(--obsidian);
     text-align: center;
+    overflow: hidden;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.heroImageWrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.heroImage {
+    object-fit: cover;
+    opacity: 0.8;
+}
+
+.heroOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(26, 26, 26, 0.4), var(--obsidian));
+    z-index: 1;
 }
 
 .heroInner {
+    position: relative;
+    z-index: 2;
     max-width: 700px;
     margin: 0 auto;
     padding: 0 var(--space-xl);
@@ -93,23 +119,12 @@
 .storyImage {
     aspect-ratio: 4 / 5;
     border-radius: var(--radius-md);
-    background: linear-gradient(145deg, var(--stone) 0%, var(--saddle) 50%, var(--obsidian) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-accent);
-    font-size: var(--text-2xl);
-    font-style: italic;
-    color: var(--ivory);
     position: relative;
     overflow: hidden;
 }
 
-.storyImage::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 40% 60%, rgba(196, 128, 61, 0.25) 0%, transparent 60%);
+.sectionImage {
+    object-fit: cover;
 }
 
 /* Values */
@@ -196,23 +211,8 @@
 .materialsImage {
     aspect-ratio: 1;
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, var(--parchment) 0%, #C8A882 50%, var(--saddle) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-accent);
-    font-size: var(--text-2xl);
-    font-style: italic;
-    color: var(--ivory);
     position: relative;
     overflow: hidden;
-}
-
-.materialsImage::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 60% 40%, rgba(139, 94, 60, 0.3) 0%, transparent 50%);
 }
 
 .materialsContent {
@@ -314,13 +314,15 @@
 @media (max-width: 768px) {
 
     .storyInner,
-    .materialsInner {
+    .materialsInner,
+    .workshopGrid {
         grid-template-columns: 1fr;
         gap: var(--space-2xl);
     }
 
     .valuesGrid {
         grid-template-columns: 1fr;
+        gap: var(--space-xl);
     }
 
     .heroTitle {

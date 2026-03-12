@@ -1,0 +1,107 @@
+.wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px solid rgba(200, 169, 110, 0.25);
+    border-radius: 6px;
+    color: #c8a96e;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.trigger:hover {
+    border-color: rgba(200, 169, 110, 0.6);
+    background: rgba(200, 169, 110, 0.06);
+}
+
+.flag {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.code {
+    font-family: inherit;
+    letter-spacing: 0.05em;
+}
+
+.chevron {
+    color: rgba(200, 169, 110, 0.6);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+/* Dropdown */
+.dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 9999;
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    background: #111;
+    border: 1px solid rgba(200, 169, 110, 0.2);
+    border-radius: 8px;
+    min-width: 180px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.12s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.option:hover {
+    background: rgba(200, 169, 110, 0.08);
+}
+
+.optionActive {
+    background: rgba(200, 169, 110, 0.12);
+}
+
+.optionCode {
+    font-size: 12px;
+    font-weight: 700;
+    color: #c8a96e;
+    letter-spacing: 0.05em;
+    width: 32px;
+    flex-shrink: 0;
+}
+
+.optionName {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+}

@@ -376,3 +376,24 @@
         transform: translateY(0);
     }
 }
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+@media (max-width: 480px) {
+
+    .header,
+    .items,
+    .footer {
+        padding: 1.25rem;
+    }
+
+    .itemImage {
+        width: 80px;
+        height: 100px;
+    }
+
+    .title {
+        font-size: 1.25rem;
+    }
+}

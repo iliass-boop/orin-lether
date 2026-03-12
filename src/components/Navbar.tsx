@@ -6,6 +6,9 @@ import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/lib/store';
 import styles from './Navbar.module.css';
 import gsap from 'gsap';
+import dynamic from 'next/dynamic';
+
+const CurrencySelector = dynamic(() => import('./CurrencySelector'), { ssr: false });
 
 const navLinks = [
     { href: '/products', label: 'Shop' },
@@ -24,9 +27,14 @@ export default function Navbar() {
     const navRef = useRef<HTMLElement>(null);
     const linkRefs = useRef<HTMLAnchorElement[]>([]);
     const lastScrollY = useRef(0);
+    const [mounted, setMounted] = useState(false);
+
+    // Mark as mounted after first client render — prevents hydration mismatch
+    useEffect(() => { setMounted(true); }, []);
 
     // Close mobile menu on route change
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMobileOpen(false);
     }, [pathname]);
 
@@ -116,6 +124,8 @@ export default function Navbar() {
                     </div>
 
                     <div className={styles.navRight}>
+                        <CurrencySelector />
+
                         <button className={styles.cartButton} onClick={toggleCart} aria-label="Open cart">
                             <div className={styles.cartIcon}>
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -123,7 +133,7 @@ export default function Navbar() {
                                     <line x1="3" y1="6" x2="21" y2="6" />
                                     <path d="M16 10a4 4 0 01-8 0" />
                                 </svg>
-                                {totalItems() > 0 && (
+                                {mounted && totalItems() > 0 && (
                                     <span className={styles.cartBadge}>{totalItems()}</span>
                                 )}
                             </div>
@@ -132,7 +142,8 @@ export default function Navbar() {
                         <button
                             className={`${styles.menuToggle} ${mobileOpen ? styles.menuOpen : ''}`}
                             onClick={() => setMobileOpen(!mobileOpen)}
-                            aria-label="Toggle menu"
+                            aria-label="Toggle mobile menu"
+                            aria-controls="mobile-menu"
                         >
                             <span />
                             <span />
@@ -143,7 +154,12 @@ export default function Navbar() {
             </nav>
 
             {/* Full-screen mobile overlay */}
-            <div className={`${styles.mobileOverlay} ${mobileOpen ? styles.mobileOverlayOpen : ''}`}>
+            <div 
+                id="mobile-menu"
+                className={`${styles.mobileOverlay} ${mobileOpen ? styles.mobileOverlayOpen : ''}`}
+                role="dialog"
+                aria-label="Mobile Navigation"
+            >
                 <div className={styles.mobileOverlayContent}>
                     {navLinks.map((link, i) => (
                         <Link

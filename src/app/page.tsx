@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import styles from './page.module.css';
 import ProductCard from '@/components/ProductCard';
 import { products } from '@/lib/store';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -72,9 +73,7 @@ export default function HomePage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-  const heroImageRef = useRef<HTMLDivElement>(null);
-  const horizontalRef = useRef<HTMLDivElement>(null);
-  const horizontalInnerRef = useRef<HTMLDivElement>(null);
+  const heroImageRef = useRef<HTMLVideoElement>(null);
 
   // Refs for animated elements (avoids fragile global class selectors)
   const heroLinesRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -83,139 +82,270 @@ export default function HomePage() {
   const testimonialCardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const revealTextsRef = useRef<(HTMLElement | null)[]>([]);
 
-  const [mounted, setMounted] = useState(false);
+  // New refs for premium animations
+  const philosophyImageRef = useRef<HTMLDivElement>(null);
+  const marqueeTrackRef = useRef<HTMLDivElement>(null);
+  const marqueeSectionRef = useRef<HTMLDivElement>(null);
+  const newsletterSectionRef = useRef<HTMLDivElement>(null);
+  const ctaSectionRef = useRef<HTMLDivElement>(null);
+  const sectionLabelsRef = useRef<(HTMLElement | null)[]>([]);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const addSectionLabel = (el: HTMLElement | null) => {
+    if (el && !sectionLabelsRef.current.includes(el)) {
+      sectionLabelsRef.current.push(el);
+    }
+  };
 
-  useEffect(() => {
-    if (!mounted) return;
+  useGSAP(() => {
+    // --- Hero image parallax ---
+    if (heroImageRef.current && heroRef.current) {
+      gsap.to(heroImageRef.current, {
+        yPercent: 20,
+        scale: 1.05,
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1.2,
+        },
+      });
+    }
 
-    // Small delay to let DOM settle after hydration
-    const timer = setTimeout(() => {
-      const ctx = gsap.context(() => {
-
-        // --- Hero image parallax ---
-        if (heroImageRef.current && heroRef.current) {
-          gsap.to(heroImageRef.current, {
-            yPercent: 20,
-            scale: 1.05,
-            scrollTrigger: {
-              trigger: heroRef.current,
-              start: 'top top',
-              end: 'bottom top',
-              scrub: 1.2,
-            },
-          });
+    // --- Hero text reveal ---
+    const validHeroLines = heroLinesRef.current.filter(Boolean);
+    if (validHeroLines.length > 0) {
+      const heroTl = gsap.timeline();
+      heroTl.fromTo(
+        validHeroLines,
+        { y: 120, rotateX: -80 },
+        {
+          y: 0,
+          rotateX: 0,
+          duration: 1.3,
+          stagger: 0.12,
+          ease: 'power3.out',
+          delay: 2.0,
         }
+      );
 
-        // --- Hero text reveal ---
-        const validHeroLines = heroLinesRef.current.filter(Boolean);
-        if (validHeroLines.length > 0) {
-          const heroTl = gsap.timeline();
-          heroTl.fromTo(
-            validHeroLines,
-            { y: 120, rotateX: -80 },
-            {
-              y: 0,
-              rotateX: 0,
-              duration: 1.3,
-              stagger: 0.12,
-              ease: 'power3.out',
-              delay: 2.0,
-            }
-          );
+      const validFades = heroFadesRef.current.filter(Boolean);
+      if (validFades.length > 0) {
+        heroTl.fromTo(
+          validFades,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power2.out',
+          },
+          '-=0.5'
+        );
+      }
+    }
 
-          const validFades = heroFadesRef.current.filter(Boolean);
-          if (validFades.length > 0) {
-            heroTl.fromTo(
-              validFades,
-              { y: 30, opacity: 0 },
-              {
-                y: 0,
-                opacity: 1,
-                duration: 0.8,
-                stagger: 0.1,
-                ease: 'power2.out',
-              },
-              '-=0.5'
-            );
-          }
+    // --- Philosophy Image Parallax + Mask Reveal ---
+    if (philosophyImageRef.current) {
+      // Clip-path wipe from bottom
+      gsap.fromTo(
+        philosophyImageRef.current,
+        { clipPath: 'inset(100% 0% 0% 0%)' },
+        {
+          clipPath: 'inset(0% 0% 0% 0%)',
+          duration: 1.4,
+          ease: 'power3.inOut',
+          scrollTrigger: {
+            trigger: philosophyImageRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
         }
+      );
 
-        // --- Horizontal Scroll Showcase ---
-        // Uses native CSS overflow-x scroll (no GSAP pin — avoids Lenis conflicts)
+      // Subtle parallax float on the image
+      gsap.to(philosophyImageRef.current.querySelector('img'), {
+        yPercent: -12,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: philosophyImageRef.current,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.5,
+        },
+      });
+    }
 
-        // --- Process Steps Stagger ---
-        processStepsRef.current.filter(Boolean).forEach((step, i) => {
-          gsap.fromTo(
-            step!,
-            { y: 60, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.8,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: step!,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-              delay: i * 0.1,
-            }
-          );
+    // --- Section Label Slide-in ---
+    sectionLabelsRef.current.filter(Boolean).forEach((label) => {
+      gsap.fromTo(
+        label!,
+        { x: -40, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: label!,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
+
+    // --- Process Steps Stagger + Progress Bar Animation ---
+    processStepsRef.current.filter(Boolean).forEach((step, i) => {
+      gsap.fromTo(
+        step!,
+        { y: 60, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: step!,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+            onEnter: () => step!.classList.add(styles.animated),
+          },
+          delay: i * 0.1,
+        }
+      );
+    });
+
+    // --- Testimonial Cards — Directional Stagger ---
+    testimonialCardsRef.current.filter(Boolean).forEach((card, i) => {
+      const directions = [{ x: -40, rotate: -2 }, { y: 50, rotate: 0 }, { x: 40, rotate: 2 }];
+      const dir = directions[i % directions.length];
+      gsap.fromTo(
+        card!,
+        { ...dir, opacity: 0, scale: 0.94 },
+        {
+          x: 0,
+          y: 0,
+          rotate: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: card!,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+          delay: i * 0.12,
+        }
+      );
+    });
+
+    // --- Marquee Speed Shift on Scroll ---
+    if (marqueeTrackRef.current && marqueeSectionRef.current) {
+      gsap.to(marqueeTrackRef.current, {
+        animationDuration: '15s',
+        scrollTrigger: {
+          trigger: marqueeSectionRef.current,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+          onEnter: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '15s';
+          },
+          onLeave: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '30s';
+          },
+          onEnterBack: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '15s';
+          },
+          onLeaveBack: () => {
+            if (marqueeTrackRef.current) marqueeTrackRef.current.style.animationDuration = '30s';
+          },
+        },
+      });
+    }
+
+    // --- Newsletter Fade Up ---
+    if (newsletterSectionRef.current) {
+      const nlContent = newsletterSectionRef.current.querySelectorAll('[class*="newsletter"]');
+      gsap.fromTo(
+        nlContent,
+        { y: 50, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.9,
+          stagger: 0.08,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: newsletterSectionRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    }
+
+    // --- CTA Parallax Text ---
+    if (ctaSectionRef.current) {
+      const ctaElements = ctaSectionRef.current.querySelectorAll('h2, p, a');
+      gsap.fromTo(
+        ctaElements,
+        { y: 40, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: ctaSectionRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+
+      // Slight parallax on the CTA title
+      const ctaTitle = ctaSectionRef.current.querySelector('h2');
+      if (ctaTitle) {
+        gsap.to(ctaTitle, {
+          yPercent: -15,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: ctaSectionRef.current,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 2,
+          },
         });
+      }
+    }
 
-        // --- Testimonial Cards ---
-        testimonialCardsRef.current.filter(Boolean).forEach((card) => {
-          gsap.fromTo(
-            card!,
-            { y: 50, opacity: 0, scale: 0.96 },
-            {
-              y: 0,
-              opacity: 1,
-              scale: 1,
-              duration: 0.7,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: card!,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            }
-          );
-        });
+    // --- Reveal Texts ---
+    revealTextsRef.current.filter(Boolean).forEach((el) => {
+      gsap.fromTo(
+        el!,
+        { y: 40, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: el!,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
 
-        // --- Reveal Texts ---
-        revealTextsRef.current.filter(Boolean).forEach((el) => {
-          gsap.fromTo(
-            el!,
-            { y: 40, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.8,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: el!,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            }
-          );
-        });
+    // Refresh after everything is set up
+    ScrollTrigger.refresh();
 
-        // Refresh after everything is set up
-        ScrollTrigger.refresh();
-
-      }, containerRef);
-
-      return () => ctx.revert();
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [mounted]);
+  }, { scope: containerRef });
 
   // Helper to push refs into arrays
   const addHeroLine = (el: HTMLSpanElement | null, i: number) => {
@@ -230,19 +360,25 @@ export default function HomePage() {
     }
   };
 
+  // Newsletter subscription state
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+
   return (
     <div ref={containerRef}>
       {/* ===== Cinematic Hero ===== */}
       <section className={styles.hero} ref={heroRef}>
-        <div className={styles.heroImageWrapper} ref={heroImageRef}>
-          <Image
-            src="/images/brand/hero-banner.png"
-            alt="ORIN leather goods collection — handcrafted bags and accessories"
-            fill
-            priority
-            quality={90}
+        <div className={styles.heroImageWrapper}>
+          <video
+            ref={heroImageRef}
+            src="/images/brand/hero-animation.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            aria-hidden="true"
+            poster="/images/brand/hero-poster.jpg"
             className={styles.heroImage}
-            sizes="100vw"
           />
           <div className={styles.heroOverlay} />
         </div>
@@ -291,8 +427,8 @@ export default function HomePage() {
       </section>
 
       {/* ===== Marquee Divider ===== */}
-      <section className={styles.marqueeDivider}>
-        <div className={styles.marqueeTrack}>
+      <section className={styles.marqueeDivider} ref={marqueeSectionRef}>
+        <div className={styles.marqueeTrack} ref={marqueeTrackRef}>
           {[...Array(3)].map((_, i) => (
             <div key={i} className={styles.marqueeContent}>
               <span>Handcrafted</span>
@@ -312,7 +448,7 @@ export default function HomePage() {
       <section className={styles.philosophy}>
         <div className={styles.philosophyInner}>
           <div className={styles.philosophyContent}>
-            <p className={styles.sectionLabel} ref={addRevealText}>Our Philosophy</p>
+            <p className={styles.sectionLabel} ref={(el) => { addRevealText(el); addSectionLabel(el); }}>Our Philosophy</p>
             <h2 className={styles.philosophyTitle} ref={addRevealText}>
               Worn, Not<br />Worn Out.
             </h2>
@@ -333,12 +469,12 @@ export default function HomePage() {
               </svg>
             </Link>
           </div>
-          <div className={styles.philosophyImageWrapper}>
+          <div className={styles.philosophyImageWrapper} ref={philosophyImageRef}>
             <Image
-              src="/images/brand/craftsmanship.png"
-              alt="Artisan hand-stitching ORIN leather goods"
+              src="/images/brand/philosophy-patina.png"
+              alt="Beautifully aged ORIN full-grain leather showing rich patina"
               fill
-              quality={85}
+              quality={90}
               className={styles.philosophyImage}
               sizes="(max-width: 768px) 100vw, 50vw"
             />
@@ -347,11 +483,11 @@ export default function HomePage() {
       </section>
 
       {/* ===== Horizontal Scroll Showcase ===== */}
-      <section className={styles.horizontalSection} ref={horizontalRef}>
-        <div className={styles.horizontalInner} ref={horizontalInnerRef}>
+      <section className={styles.horizontalSection}>
+        <div className={styles.horizontalInner}>
           {/* Intro Panel */}
           <div className={styles.horizontalIntro}>
-            <p className={styles.sectionLabel}>The Collection</p>
+            <p className={styles.sectionLabel} ref={addSectionLabel}>The Collection</p>
             <h2 className={styles.horizontalTitle}>
               Built to Be<br />Carried
             </h2>
@@ -404,7 +540,7 @@ export default function HomePage() {
           {/* Right: Steps */}
           <div className={styles.processStepsCol}>
             <div className={styles.processHeader}>
-              <p className={styles.sectionLabel} ref={addRevealText}>The Process</p>
+              <p className={styles.sectionLabel} ref={(el) => { addRevealText(el); addSectionLabel(el); }}>The Process</p>
               <h2 className={styles.processTitle} ref={addRevealText}>
                 Four Steps.<br />Zero Shortcuts.
               </h2>
@@ -452,7 +588,7 @@ export default function HomePage() {
       {/* ===== Testimonials ===== */}
       <section className={styles.testimonials}>
         <div className={styles.testimonialsInner}>
-          <p className={styles.sectionLabel} ref={addRevealText}>What They Say</p>
+          <p className={styles.sectionLabel} ref={(el) => { addRevealText(el); addSectionLabel(el); }}>What They Say</p>
           <h2 className={styles.testimonialsTitle} ref={addRevealText}>Words From the Road</h2>
 
           <div className={styles.testimonialGrid}>
@@ -479,7 +615,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Newsletter ===== */}
-      <section className={styles.newsletter}>
+      <section className={styles.newsletter} ref={newsletterSectionRef}>
         <div className={styles.newsletterInner}>
           <div className={styles.newsletterContent}>
             <p className={styles.newsletterAccent}>Join the journey</p>
@@ -488,28 +624,45 @@ export default function HomePage() {
               First access to new pieces, behind-the-scenes craft stories,
               and the occasional leather care tip. No noise.
             </p>
-            <form className={styles.newsletterForm} onSubmit={(e) => e.preventDefault()}>
-              <div className={styles.newsletterInputWrapper}>
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className={styles.newsletterInput}
-                  required
-                />
-                <button type="submit" className={styles.newsletterBtn}>
-                  Subscribe
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+            <form
+              className={styles.newsletterForm}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newsletterEmail.trim()) return;
+                // Show success state (integrate with email provider here)
+                setNewsletterSubscribed(true);
+                setNewsletterEmail('');
+              }}
+            >
+              {newsletterSubscribed ? (
+                <p style={{ color: '#c9a96e', textAlign: 'center', fontFamily: 'var(--font-body)', letterSpacing: '0.05em' }}>
+                  ✓ You&apos;re on the list.
+                </p>
+              ) : (
+                <div className={styles.newsletterInputWrapper}>
+                  <input
+                    type="email"
+                    placeholder="Your email"
+                    className={styles.newsletterInput}
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    required
+                  />
+                  <button type="submit" className={styles.newsletterBtn}>
+                    Subscribe
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         </div>
       </section>
 
       {/* ===== Final CTA ===== */}
-      <section className={styles.ctaBanner}>
+      <section className={styles.ctaBanner} ref={ctaSectionRef}>
         <div className={styles.ctaBannerInner}>
           <p className={styles.ctaAccent} ref={addRevealText}>Your next favorite thing</p>
           <h2 className={styles.ctaTitle} ref={addRevealText}>

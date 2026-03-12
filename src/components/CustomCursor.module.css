@@ -1,3 +1,8 @@
+/* ============================================================
+   CustomCursor Styles — Context-Aware Luxury Cursor
+   ============================================================ */
+
+/* --- Base Elements --- */
 .dot,
 .ring {
     position: fixed;
@@ -5,76 +10,122 @@
     left: 0;
     pointer-events: none;
     z-index: 99999;
+    border-radius: 50%;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition:
+        opacity 0.3s,
+        width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 0.35s ease,
+        border-color 0.35s ease;
     will-change: transform;
 }
 
 .dot {
     width: 6px;
     height: 6px;
+    background: var(--cognac, #8b4513);
     margin-left: -3px;
     margin-top: -3px;
-    background-color: var(--obsidian);
-    border-radius: 50%;
-    transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease, background-color 0.2s ease, opacity 0.3s ease;
+    mix-blend-mode: exclusion;
 }
 
 .ring {
     width: 36px;
     height: 36px;
+    border: 1.5px solid rgba(139, 69, 19, 0.7);
+    background: transparent;
     margin-left: -18px;
     margin-top: -18px;
-    border: 1.5px solid var(--obsidian);
-    border-radius: 50%;
-    transition: width 0.35s var(--ease-out), height 0.35s var(--ease-out), margin 0.35s var(--ease-out), border-color 0.3s ease, opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Visible */
+/* --- Visibility --- */
 .visible {
     opacity: 1;
 }
 
-/* Hovering interactive elements */
-.ring.hovering {
-    width: 56px;
-    height: 56px;
-    margin-left: -28px;
-    margin-top: -28px;
-    border-color: var(--cognac);
-    opacity: 0.6;
-}
-
-/* Clicking */
-.dot.clicking {
+/* --- Clicking --- */
+.clicking.dot {
+    transform-origin: center;
     width: 4px;
     height: 4px;
-    margin-left: -2px;
-    margin-top: -2px;
-    background-color: var(--cognac);
 }
 
-.ring.clicking {
+.clicking.ring {
     width: 28px;
     height: 28px;
-    margin-left: -14px;
-    margin-top: -14px;
-    border-color: var(--cognac);
+    border-color: var(--cognac, #8b4513);
 }
 
-/* Hide on mobile */
-@media (max-width: 768px) {
-
-    .dot,
-    .ring {
-        display: none !important;
-    }
+/* --- Hovering (links, buttons) --- */
+.mode_hovering.ring {
+    width: 52px;
+    height: 52px;
+    border-color: rgba(139, 69, 19, 0.5);
+    margin-left: -26px;
+    margin-top: -26px;
 }
 
-@media (hover: none) {
+.mode_hovering.dot {
+    opacity: 0;
+}
 
-    .dot,
-    .ring {
-        display: none !important;
-    }
+/* --- VIEW mode (product images) --- */
+.mode_view.ring {
+    width: 80px;
+    height: 80px;
+    margin-left: -40px;
+    margin-top: -40px;
+    background: rgba(139, 69, 19, 0.85);
+    border-color: transparent;
+    backdrop-filter: blur(4px);
+}
+
+.mode_view.dot {
+    opacity: 0;
+}
+
+/* --- DRAG mode (3D viewer) --- */
+.mode_drag.ring {
+    width: 72px;
+    height: 72px;
+    margin-left: -36px;
+    margin-top: -36px;
+    background: rgba(20, 16, 12, 0.8);
+    border-color: transparent;
+    backdrop-filter: blur(4px);
+}
+
+.mode_drag.dot {
+    opacity: 0;
+}
+
+/* --- CTA mode (add to cart, checkout) --- */
+.mode_cta.ring {
+    width: 60px;
+    height: 60px;
+    margin-left: -30px;
+    margin-top: -30px;
+    background: var(--cognac, #8b4513);
+    border-color: transparent;
+}
+
+.mode_cta.dot {
+    background: #fff;
+    mix-blend-mode: normal;
+}
+
+/* --- Label inside ring (VIEW / DRAG) --- */
+.label {
+    font-family: var(--font-sans, sans-serif);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: #fff;
+    text-transform: uppercase;
+    user-select: none;
+    white-space: nowrap;
 }

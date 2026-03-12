@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from '@sentry/nextjs';
+
+
 
 const nextConfig: NextConfig = {
   // --- Transpile packages for bundler compatibility ---
@@ -16,29 +19,70 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
-  // --- Security Headers ---
+  // --- HTTP Cache Headers (Edge Caching Strategy) ---
   async headers() {
     return [
+      // ── Global security headers ──────────────────────────────────
       {
         source: '/(.*)',
         headers: [
-          // Prevent MIME sniffing
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://maps.googleapis.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https://*.stripe.com https://*.supabase.co",
+              "font-src 'self' https://fonts.gstatic.com",
+              "connect-src 'self' https://api.stripe.com https://*.supabase.co https://*.sentry.io https://*.upstash.io wss://*.supabase.co",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+              "upgrade-insecure-requests",
+            ].join('; '),
+          },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
-          // Clickjacking protection
           { key: 'X-Frame-Options', value: 'DENY' },
-          // XSS protection (legacy browsers)
           { key: 'X-XSS-Protection', value: '1; mode=block' },
-          // Referrer policy
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          // HSTS
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          // Permissions policy
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(self)' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com")' },
         ],
       },
+
+      // ── Static pages — aggressive CDN edge cache ─────────────────
+      // s-maxage: CDN caches for 1h. stale-while-revalidate: serve stale
+      // for 24h while Next.js revalidates in background → zero wait on cache miss.
       {
-        // Cache static assets aggressively
-        source: '/images/(.*)',
+        source: '/:path(|about|products|checkout/success)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' },
+          { key: 'Vary', value: 'Accept-Encoding' },
+        ],
+      },
+
+      // ── API routes — never cache payment or auth data ─────────────
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store, no-cache, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+        ],
+      },
+
+      // ── Next.js build output — immutable (content-hashed filenames) ──
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+
+      // ── User-uploaded / product images ───────────────────────────
+      {
+        source: '/images/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
@@ -59,4 +103,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Sentry for sourcemap upload + automatic instrumentation
+// Sentry is disabled in development (see sentry.*.config.ts)
+export default withSentryConfig(nextConfig, {
+  // Suppresses source map uploading logs during build
+  silent: true,
+  // Automatically tree-shake Sentry logger statements
+  disableLogger: true,
+  // Upload sourcemaps only in CI/production to avoid local overhead
+  automaticVercelMonitors: true,
+});

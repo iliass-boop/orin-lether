@@ -28,7 +28,11 @@ const initialReviews: Review[] = [
     },
 ];
 
-export default function ReviewSection({ productId }: { productId: string }) {
+interface ReviewSectionProps {
+    productId: string;
+}
+
+export default function ReviewSection({ productId }: ReviewSectionProps) {
     const [reviews, setReviews] = useState<Review[]>(initialReviews);
     const [newReview, setNewReview] = useState({ author: '', rating: 5, text: '' });
 

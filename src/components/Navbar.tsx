@@ -142,7 +142,8 @@ export default function Navbar() {
                         <button
                             className={`${styles.menuToggle} ${mobileOpen ? styles.menuOpen : ''}`}
                             onClick={() => setMobileOpen(!mobileOpen)}
-                            aria-label="Toggle menu"
+                            aria-label="Toggle mobile menu"
+                            aria-controls="mobile-menu"
                         >
                             <span />
                             <span />
@@ -153,7 +154,12 @@ export default function Navbar() {
             </nav>
 
             {/* Full-screen mobile overlay */}
-            <div className={`${styles.mobileOverlay} ${mobileOpen ? styles.mobileOverlayOpen : ''}`}>
+            <div 
+                id="mobile-menu"
+                className={`${styles.mobileOverlay} ${mobileOpen ? styles.mobileOverlayOpen : ''}`}
+                role="dialog"
+                aria-label="Mobile Navigation"
+            >
                 <div className={styles.mobileOverlayContent}>
                     {navLinks.map((link, i) => (
                         <Link

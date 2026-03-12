@@ -76,7 +76,7 @@ export default function CartDrawer() {
                 <div className={styles.header}>
                     <div>
                         <span className={styles.title}>Your Cart</span>
-                        <span className={styles.itemCount}>
+                        <span className={styles.itemCount} aria-live="polite" aria-atomic="true">
                             {mounted ? totalItems() : 0} {(mounted ? totalItems() : 0) === 1 ? 'item' : 'items'}
                         </span>
                     </div>

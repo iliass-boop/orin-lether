@@ -126,8 +126,12 @@ export async function middleware(request: NextRequest) {
     if (!isDev && pathname.startsWith('/api')) {
         try {
             const ip = getClientIp(request);
-            const isCheckout = pathname.startsWith('/api/checkout');
-            const { limited, limit, remaining, resetAt } = await checkRateLimit(ip, isCheckout);
+            const variant = pathname.startsWith('/api/checkout')
+                ? 'checkout' as const
+                : pathname.startsWith('/api/newsletter')
+                    ? 'newsletter' as const
+                    : 'general' as const;
+            const { limited, limit, remaining, resetAt } = await checkRateLimit(ip, variant);
 
             if (limited) {
                 // Fix: clamp to minimum 1 to prevent 0 or negative Retry-After values

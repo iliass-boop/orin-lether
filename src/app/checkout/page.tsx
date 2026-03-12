@@ -292,11 +292,21 @@ export default function CheckoutPage() {
                 items: items.map(item => ({ productId: item.product.id, quantity: item.quantity })),
             }),
         })
-            .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+            .then(res => { 
+                if (res.status === 503) {
+                    throw new Error('UNAVAILABLE');
+                }
+                if (!res.ok) throw new Error(`HTTP ${res.status}`); 
+                return res.json(); 
+            })
             .then(data => setClientSecret(data.clientSecret))
             .catch(err => {
-                console.error('[CHECKOUT_INIT]', err);
-                setInitError('Unable to initialize secure checkout. Please try again.');
+                if (err.message === 'UNAVAILABLE') {
+                    setInitError('UNAVAILABLE');
+                } else {
+                    console.error('[CHECKOUT_INIT]', err);
+                    setInitError('Unable to initialize secure checkout. Please try again.');
+                }
             });
     }, [mounted, items]);
 
@@ -326,8 +336,10 @@ export default function CheckoutPage() {
     const cartTotal = mounted ? totalPrice() : 0;
     const totalQty = mounted ? items.reduce((s, i) => s + i.quantity, 0) : 0;
 
+    const [devOverride, setDevOverride] = useState(false);
+
     // ── Missing Stripe key guard ──
-    if (!stripePublishableKey) {
+    if (!devOverride && (!stripePublishableKey || initError === 'UNAVAILABLE')) {
         return (
             <div className={styles.page}>
                 <header className={styles.topBar}>
@@ -337,7 +349,20 @@ export default function CheckoutPage() {
                     <p className={styles.emptyGlyph}>!</p>
                     <h2 className={styles.emptyTitle}>Checkout Unavailable</h2>
                     <p className={styles.emptyText}>Payment configuration is missing. Please contact support.</p>
-                    <Link href="/products" className={styles.browseBtn}>Continue Shopping</Link>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', justifyContent: 'center' }}>
+                        <Link href="/products" className={styles.browseBtn}>Continue Shopping</Link>
+                        {process.env.NODE_ENV === 'development' && (
+                            <button 
+                                onClick={() => setDevOverride(true)}
+                                style={{ 
+                                    background: 'transparent', border: '1px solid #333', color: '#888',
+                                    padding: '0 24px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer'
+                                }}
+                            >
+                                Dev Override (View UI)
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         );
@@ -371,11 +396,129 @@ export default function CheckoutPage() {
                 <LockIcon />
             </header>
 
-            <div className={styles.grid}>
-                {/* ── COL 1: Order Summary ── */}
-                <section className={styles.col} aria-labelledby="col1-title">
-                    <h2 className={styles.colHeader} id="col1-title">
-                        <StepDot n={1} />
+            <div className={styles.container}>
+                {/* ── LEFT COL: Contact, Shipping, Payment ── */}
+                <div className={styles.formSection}>
+                    {/* Step 1: Shipping */}
+                    <div className={styles.formGroup} aria-labelledby="col2-title">
+                        <h2 className={styles.sectionTitle} id="col2-title">
+                            <StepDot n={1} />
+                            Shipping Address
+                        </h2>
+                        <p className={styles.colNote}>Fields marked * are required</p>
+
+                        <Field label="Email address" name="email" type="email" placeholder="you@example.com" required autoComplete="email"
+                            value={formData.email} onChange={handleField} onBlur={handleBlur}
+                            error={getFieldError('email', formData.email)} touched={!!touched.email} />
+
+                        <div className={styles.fieldRow}>
+                            <Field label="First name" name="firstName" required autoComplete="given-name"
+                                value={formData.firstName} onChange={handleField} onBlur={handleBlur}
+                                error={getFieldError('firstName', formData.firstName)} touched={!!touched.firstName} />
+                            <Field label="Last name" name="lastName" required autoComplete="family-name"
+                                value={formData.lastName} onChange={handleField} onBlur={handleBlur}
+                                error={getFieldError('lastName', formData.lastName)} touched={!!touched.lastName} />
+                        </div>
+
+                        <Field label="Phone number" name="phone" type="tel" placeholder="+1 (555) 000-0000" autoComplete="tel"
+                            value={formData.phone} onChange={handleField} onBlur={handleBlur}
+                            error={getFieldError('phone', formData.phone)} touched={!!touched.phone} />
+
+                        <Field label="Street address" name="address" placeholder="1 Leather Lane" required autoComplete="street-address"
+                            value={formData.address} onChange={handleField} onBlur={handleBlur}
+                            error={getFieldError('address', formData.address)} touched={!!touched.address} />
+
+                        <div className={styles.fieldRow}>
+                            <Field label="City" name="city" required autoComplete="address-level2"
+                                value={formData.city} onChange={handleField} onBlur={handleBlur}
+                                error={getFieldError('city', formData.city)} touched={!!touched.city} />
+                            <Field label="State / Region" name="state" autoComplete="address-level1"
+                                value={formData.state} onChange={handleField} onBlur={handleBlur}
+                                error={getFieldError('state', formData.state)} touched={!!touched.state} />
+                        </div>
+
+                        <div className={styles.fieldRow}>
+                            <Field label="ZIP / Postal code" name="zip" autoComplete="postal-code"
+                                value={formData.zip} onChange={handleField} onBlur={handleBlur}
+                                error={getFieldError('zip', formData.zip)} touched={!!touched.zip} />
+                            {/* Country select */}
+                            <div className={styles.fieldGroup}>
+                                <label className={styles.fieldLabel} htmlFor="country">
+                                    Country <span className={styles.req} aria-hidden="true">*</span>
+                                </label>
+                                <div className={styles.selectWrapper}>
+                                    <select
+                                        id="country"
+                                        name="country"
+                                        className={`${styles.field} ${styles.select}`}
+                                        value={formData.country}
+                                        onChange={handleField}
+                                        onBlur={() => handleBlur('country')}
+                                        autoComplete="country"
+                                        required
+                                    >
+                                        <option value="">Select country</option>
+                                        {COUNTRIES.map(c => (
+                                            <option key={c.code} value={c.code}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                    <svg className={styles.selectArrow} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Step 2: Payment */}
+                    <div className={styles.formGroup} aria-labelledby="col3-title">
+                        <h2 className={styles.sectionTitle} id="col3-title">
+                            <StepDot n={2} />
+                            Payment Method
+                            <span className={styles.stripeBadge} aria-label="Powered by Stripe">
+                                <svg width="38" height="16" viewBox="0 0 60 25" fill="none" aria-hidden="true"><text x="0" y="20" fontFamily="system-ui,sans-serif" fontSize="18" fill="#6772e5" fontWeight="700">stripe</text></svg>
+                            </span>
+                        </h2>
+
+                        {devOverride ? (
+                            <div className={styles.paymentForm}>
+                                <div className={styles.stripeBox} style={{ border: '1px dashed #333', padding: '2rem', textAlign: 'center', color: '#666' }}>
+                                    [ Stripe Elements Mock (Dev Override) ]
+                                    <br />
+                                    Payment cannot be processed.
+                                </div>
+                                <button className={styles.submitBtn} disabled>
+                                    Complete Order · {formatPrice(totalPrice())}
+                                </button>
+                                <p className={styles.secureNote}>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                                    Dev Override Active
+                                </p>
+                            </div>
+                        ) : initError ? (
+                            <div className={styles.initErrorBox}>
+                                <div className={styles.errorBanner} role="alert">
+                                    <span className={styles.errorIcon}>!</span>
+                                    <span>{initError}</span>
+                                </div>
+                                <button className={styles.retryBtn} onClick={() => setRetryCount(n => n + 1)}>
+                                    Try Again
+                                </button>
+                            </div>
+                        ) : clientSecret ? (
+                            <Elements options={{ clientSecret, appearance: STRIPE_APPEARANCE, locale: 'en' }} stripe={stripePromise}>
+                                <PaymentForm formData={formData} totalPrice={cartTotal} onValidate={validateAll} />
+                            </Elements>
+                        ) : (
+                            <div className={styles.stripeLoading} aria-live="polite">
+                                <span className={styles.spinner} aria-hidden="true" />
+                                <span>Initializing secure payment…</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── RIGHT COL: Order Summary ── */}
+                <div className={styles.summary} aria-labelledby="col1-title">
+                    <h2 className={styles.summaryTitle} id="col1-title">
                         Order Summary
                         {mounted && <span className={styles.colCount}>{totalQty} {totalQty === 1 ? 'item' : 'items'}</span>}
                     </h2>
@@ -427,130 +570,7 @@ export default function CheckoutPage() {
                         <span>Total (USD)</span>
                         <span>{mounted ? formatPrice(cartTotal) : '—'}</span>
                     </div>
-                </section>
-
-                {/* ── COL 2: Shipping Address ── */}
-                <section className={styles.col} aria-labelledby="col2-title">
-                    <h2 className={styles.colHeader} id="col2-title">
-                        <StepDot n={2} />
-                        Shipping Address
-                    </h2>
-                    <p className={styles.colNote}>Fields marked * are required</p>
-
-                    <Field label="Email address" name="email" type="email" placeholder="you@example.com" required autoComplete="email"
-                        value={formData.email} onChange={handleField} onBlur={handleBlur}
-                        error={getFieldError('email', formData.email)} touched={!!touched.email} />
-
-                    <div className={styles.fieldRow}>
-                        <Field label="First name" name="firstName" required autoComplete="given-name"
-                            value={formData.firstName} onChange={handleField} onBlur={handleBlur}
-                            error={getFieldError('firstName', formData.firstName)} touched={!!touched.firstName} />
-                        <Field label="Last name" name="lastName" required autoComplete="family-name"
-                            value={formData.lastName} onChange={handleField} onBlur={handleBlur}
-                            error={getFieldError('lastName', formData.lastName)} touched={!!touched.lastName} />
-                    </div>
-
-                    <Field label="Phone number" name="phone" type="tel" placeholder="+1 (555) 000-0000" autoComplete="tel"
-                        value={formData.phone} onChange={handleField} onBlur={handleBlur}
-                        error={getFieldError('phone', formData.phone)} touched={!!touched.phone} />
-
-                    <Field label="Street address" name="address" placeholder="1 Leather Lane" required autoComplete="street-address"
-                        value={formData.address} onChange={handleField} onBlur={handleBlur}
-                        error={getFieldError('address', formData.address)} touched={!!touched.address} />
-
-                    <div className={styles.fieldRow}>
-                        <Field label="City" name="city" required autoComplete="address-level2"
-                            value={formData.city} onChange={handleField} onBlur={handleBlur}
-                            error={getFieldError('city', formData.city)} touched={!!touched.city} />
-                        <Field label="State / Region" name="state" autoComplete="address-level1"
-                            value={formData.state} onChange={handleField} onBlur={handleBlur}
-                            error={getFieldError('state', formData.state)} touched={!!touched.state} />
-                    </div>
-
-                    <div className={styles.fieldRow}>
-                        <Field label="ZIP / Postal code" name="zip" autoComplete="postal-code"
-                            value={formData.zip} onChange={handleField} onBlur={handleBlur}
-                            error={getFieldError('zip', formData.zip)} touched={!!touched.zip} />
-                        {/* Country select */}
-                        <div className={styles.fieldGroup}>
-                            <label className={styles.fieldLabel} htmlFor="country">
-                                Country <span className={styles.req} aria-hidden="true">*</span>
-                            </label>
-                            <div className={styles.selectWrapper}>
-                                <select
-                                    id="country"
-                                    name="country"
-                                    className={`${styles.field} ${styles.select}`}
-                                    value={formData.country}
-                                    onChange={handleField}
-                                    onBlur={() => handleBlur('country')}
-                                    autoComplete="country"
-                                    required
-                                >
-                                    <option value="">Select country</option>
-                                    {COUNTRIES.map(c => (
-                                        <option key={c.code} value={c.code}>{c.name}</option>
-                                    ))}
-                                </select>
-                                <svg className={styles.selectArrow} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ── COL 3: Payment ── */}
-                <section className={styles.col} aria-labelledby="col3-title">
-                    <h2 className={styles.colHeader} id="col3-title">
-                        <StepDot n={3} />
-                        Payment Method
-                        <span className={styles.stripeBadge} aria-label="Powered by Stripe">
-                            <svg width="38" height="16" viewBox="0 0 60 25" fill="none" aria-hidden="true"><text x="0" y="20" fontFamily="system-ui,sans-serif" fontSize="18" fill="#6772e5" fontWeight="700">stripe</text></svg>
-                        </span>
-                    </h2>
-
-                    {initError ? (
-                        <div className={styles.initErrorBox}>
-                            <div className={styles.errorBanner} role="alert">
-                                <span className={styles.errorIcon}>!</span>
-                                <span>{initError}</span>
-                            </div>
-                            <button className={styles.retryBtn} onClick={() => setRetryCount(n => n + 1)}>
-                                Try Again
-                            </button>
-                        </div>
-                    ) : clientSecret ? (
-                        <Elements options={{ clientSecret, appearance: STRIPE_APPEARANCE, locale: 'en' }} stripe={stripePromise}>
-                            <PaymentForm formData={formData} totalPrice={cartTotal} onValidate={validateAll} />
-                        </Elements>
-                    ) : (
-                        <div className={styles.stripeLoading} aria-live="polite">
-                            <span className={styles.spinner} aria-hidden="true" />
-                            <span>Initializing secure payment…</span>
-                        </div>
-                    )}
-
-                    {/* Order Details recap */}
-                    <div className={styles.orderDetails} aria-label="Order details">
-                        <h3 className={styles.orderDetailsTitle}>Order Details</h3>
-                        {mounted && items.map(item => (
-                            <div key={item.product.id} className={styles.detailRow}>
-                                <span className={styles.detailName}>
-                                    {item.quantity}× {item.product.name}
-                                    <span className={styles.detailSub}> · {item.product.color.name}</span>
-                                </span>
-                                <span className={styles.detailPrice}>{formatPrice(item.product.price * item.quantity)}</span>
-                            </div>
-                        ))}
-                        <div className={styles.detailRow}>
-                            <span className={styles.detailName}>Shipping</span>
-                            <span className={styles.detailFree}>Complimentary</span>
-                        </div>
-                        <div className={styles.detailTotal}>
-                            <span>Total (USD)</span>
-                            <span>{mounted ? formatPrice(cartTotal) : '—'}</span>
-                        </div>
-                    </div>
-                </section>
+                </div>
             </div>
         </div>
     );
